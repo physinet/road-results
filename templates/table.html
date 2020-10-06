@@ -1,7 +1,58 @@
-{% for row in rows %}
-<tr>
-    <td>{{ row['a'] }}</td>
-    <td>{{ row['b'] }}</td>
-    <td>{{ row['c'] }}</td>
-</tr>
-{% endfor %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Scrolling Nav - Start Bootstrap Template</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="{{ url_for('static', filename='css/scrolling-nav.css') }}" rel="stylesheet">
+</head>
+
+<body id="page-top">
+<table class="table">
+  <thead class="thead-dark">
+    <tr>
+		  <th scope="col">#</th>
+		  <th scope="col">First</th>
+		  <th scope="col">Last</th>
+		  <th scope="col">asdfasf</th>
+	  </tr>
+  </thead>
+  <tbody>
+	  {% for row in rows %}
+	  <tr>
+		  <th scope="row">{{loop.index}}</th>
+			  <td>{{ row.a }}</td>
+			  <td>{{ row.b }}</td>
+			  <td>{{ row.c }}</td>
+	  </tr>
+	  {% endfor %}
+  </tbody>
+</table>
+
+
+
+
+
+<!-- Bootstrap core JavaScript -->
+<script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+<!-- Plugin JavaScript -->
+<script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
+
+<!-- Custom JavaScript for this theme -->
+<script src="{{ url_for('static', filename='js/scrolling-nav.js') }}"></script>
+
+</body>
+
+</html>
