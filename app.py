@@ -51,11 +51,14 @@ def create_app(configfile=None):
                                              form=RaceForm(),
                                              scroll='results',
                                              race_name=race_name)
+
     @app.route("/search/<string:box>")
     def process(box):
         query = request.args.get('query')
-        suggestions = [{'value': 'joe','data': 'joe'}, {'value': 'jim','data': 'jim'}]
-        return jsonify({"suggestions":suggestions})
+        suggest_strs = [f'{i}race{i}' for i in range(100)]
+        suggestions = [{'value': s} for s in suggest_strs if query in s]
+        print(repr(query), suggestions)
+        return jsonify({"suggestions": suggestions[:5]})
 
     @app.route('/df')
     def render_df():

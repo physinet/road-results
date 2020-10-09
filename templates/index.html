@@ -95,22 +95,25 @@
       });
       </script>
 
+      <div class="container text-center">
+      <h2> Enter race name: </h2>
+        <form method="POST">
+          <input type="text" name="race_name" id="autocomplete1" placeholder="Bucknell Cycling Classic">
+          <input type="submit">
 
-      Enter race name:
-      <form method="POST">
-        <input type="text" name="race_name" id="autocomplete1"/>
-        <input type="submit">
-
-        <script>
-        $('#autocomplete1').autocomplete({
-            serviceUrl: '/search/race_name',
-            dataType: 'json',
-            onSearchComplete: function (query, suggestions) {
-              console.log(query);
-            }
-        });
-        </script>
-      </form>
+          <script>
+          $('#autocomplete1').autocomplete({
+              serviceUrl: '/search/race_name',
+              dataType: 'json',
+              lookupLimit: 10,
+              minChars: 1,
+              onSearchComplete: function (query, suggestions) {
+                console.log(query);
+              }
+          });
+          </script>
+        </form>
+      </div>
 
     </div>
   </section>
@@ -122,13 +125,12 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
-          <h2 style="text-align: center">Services we offer</h2>
+          <h2 style="text-align: center">{{ race_name }}</h2>
           <div class="col-lg-12 mx-auto" style="display: flex;  justify-content: space-evenly;">
-            {{ race_name }}
             <iframe style="width: 100%; height: 5in;" src="table">
             </iframe>
-            <iframe style="width: 100%;" src="table">
-            </iframe>
+            <!-- <iframe style="width: 100%;" src="table">
+            </iframe> -->
 
           </div>
         </div>
