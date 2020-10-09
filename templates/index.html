@@ -16,6 +16,12 @@
   <!-- Custom styles for this template -->
   <link href="{{ url_for('static', filename='css/scrolling-nav.css') }}" rel="stylesheet">
 
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/1.2.26/jquery.autocomplete.min.js"></script>
+
+
+
 </head>
 
 <body id="page-top">
@@ -33,7 +39,7 @@
             <a class="nav-link js-scroll-trigger" href="#about">About</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#services">Services</a>
+            <a class="nav-link js-scroll-trigger" href="#results">Results</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#contact">Contact</a>
@@ -64,15 +70,67 @@
           </ul>
         </div>
       </div>
+      <select>
+        {% for item in race_list %}
+          <option value="{{item}}">{{item}}</option>
+        {% endfor %}
+      </select>
+
+
+      <form action='select_race' method="POST">
+        {{ form.hidden_tag() }}
+        <div style="width: 220px">
+          {{ form.name }}
+        </div>
+        <button>Submit</button>
+      </form>
+
+      <script>
+      $(document).ready(function() {
+          $('#name').select2({  // init Select2 on form's name field
+              placeholder: "{{ form.name.label.text }}",
+              allowClear: true,
+              "width": "style"
+          });
+      });
+      </script>
+
+
+      Enter race name:
+      <form method="POST">
+        <input type="text" name="race_name" id="autocomplete1"/>
+        <input type="submit">
+
+        <script>
+        $('#autocomplete1').autocomplete({
+            serviceUrl: '/search/race_name',
+            dataType: 'json',
+            onSearchComplete: function (query, suggestions) {
+              console.log(query);
+            }
+        });
+        </script>
+      </form>
+
     </div>
   </section>
 
-  <section id="services" class="bg-light">
+  <section id="results" class="bg-light">
+    <script>
+      document.location.hash = '#' + '{{ scroll }}';
+    </script>
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
-          <h2>Services we offer</h2>
-          <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Aut optio velit inventore, expedita quo laboriosam possimus ea consequatur vitae, doloribus consequuntur ex. Nemo assumenda laborum vel, labore ut velit dignissimos.</p>
+          <h2 style="text-align: center">Services we offer</h2>
+          <div class="col-lg-12 mx-auto" style="display: flex;  justify-content: space-evenly;">
+            {{ race_name }}
+            <iframe style="width: 100%; height: 5in;" src="table">
+            </iframe>
+            <iframe style="width: 100%;" src="table">
+            </iframe>
+
+          </div>
         </div>
       </div>
     </div>
