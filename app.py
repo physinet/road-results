@@ -4,6 +4,8 @@ from wtforms import SelectField, validators
 import pandas as pd
 import dill
 
+from plotting import make_plot
+
 rows = [
     {'a': 1, 'b': 2, 'c':3},
     {'a': 3, 'b': 5, 'c':-6}
@@ -46,11 +48,13 @@ def create_app(configfile=None):
 
     @app.route('/', methods=['POST'])
     def index_post():
-        race_name = request.form['race_name']
+        racer_url = request.form['racer_url']
+        if racer_url == '':
+            racer_url = 'https://results.bikereg.com/racer/177974'
         return render_template('index.html', race_list=race_names,
                                              form=RaceForm(),
                                              scroll='results',
-                                             race_name=race_name)
+                                             racer_url=racer_url)
 
     @app.route("/search/<string:box>")
     def process(box):
@@ -63,6 +67,12 @@ def create_app(configfile=None):
     @app.route('/df')
     def render_df():
         return render_template('df.html', df=df)
+
+    @app.route('/plot')
+    def plot():
+        return make_plot()
+        # script, div = make_plot()
+        # return render_template('plot.html', script=script, div=div)
 
     return app
 

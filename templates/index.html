@@ -51,8 +51,11 @@
 
   <header class="bg-primary text-white">
     <div class="container text-center">
-      <h1>Welcome to Scrolling Nav</h1>
-      <p class="lead">A landing page template freshly redesigned for Bootstrap 4</p>
+      <h1>Road cycling race analysis</h1>
+      <br>
+      <p class="lead">Explore your racing history</p>
+      <p class="lead">Get to know your competition</p>
+      <p class="lead">Find successful teams</p>
     </div>
   </header>
 
@@ -95,7 +98,7 @@
       });
       </script>
 
-      <div class="container text-center">
+      <!-- <div class="container text-center">
       <h2> Enter race name: </h2>
         <form method="POST">
           <input type="text" name="race_name" id="autocomplete1" placeholder="Bucknell Cycling Classic">
@@ -104,6 +107,26 @@
           <script>
           $('#autocomplete1').autocomplete({
               serviceUrl: '/search/race_name',
+              dataType: 'json',
+              lookupLimit: 10,
+              minChars: 1,
+              onSearchComplete: function (query, suggestions) {
+                console.log(query);
+              }
+          });
+          </script>
+        </form>
+      </div> -->
+
+      <div class="container text-center">
+      <h2> Enter racer URL: </h2>
+        <form method="POST">
+          <input size="50" type="text" name="racer_url" id="autocomplete1" placeholder="https://results.bikereg.com/racer/177974">
+          <input type="submit">
+
+          <script>
+          $('#autocomplete1').autocomplete({
+              serviceUrl: '/search/racer_url',
               dataType: 'json',
               lookupLimit: 10,
               minChars: 1,
@@ -125,13 +148,16 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
-          <h2 style="text-align: center">{{ race_name }}</h2>
+          <h2 style="text-align: center">{{ racer_url }}</h2>
           <div class="col-lg-12 mx-auto" style="display: flex;  justify-content: space-evenly;">
             <iframe style="width: 100%; height: 5in;" src="table">
             </iframe>
             <!-- <iframe style="width: 100%;" src="table">
             </iframe> -->
-
+          </div>
+          <div>
+            <iframe style="width: 100%; height: 5in;" src="plot">
+            </iframe>
           </div>
         </div>
       </div>
