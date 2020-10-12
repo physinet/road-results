@@ -42,14 +42,17 @@ def process_rider(df):
     '''
     Does preprocessing related to each individual rider:
     - Combines FirstName and LastName
-    - Drops racers with missing names
+    - Drops racers with missing names or names containing digits (bad data)
     - Consolidates age columns
     '''
     # Missing names - there may be more!
-    df = df[~df['RacerID'].isin([3288, 61706])]
+    df = df[~df['RacerID'].isin([3288, 61706, 832, 351])]
 
+    # Combine FirstName, Lastname and check for digits
     df = df.assign(Name=df['FirstName'] + ' ' + df['LastName'])
     df = df.drop(columns=['FirstName', 'LastName'])
+    df = df[~df['Name'].str.contains(r'[\d]')]
+    df = df[df['Name'] != 'Unknown Rider']
 
     age_cols = ['CalculatedAge', 'ReportedAge']
     df.loc[:, 'Age'] = df[age_cols].fillna(0).max(axis=1).replace(0, np.nan)
