@@ -48,7 +48,7 @@ def process_rider(df):
     # Missing names - there may be more!
     df = df[~df['RacerID'].isin([3288, 61706])]
 
-    df['Name'] = df['FirstName'] + ' ' + df['LastName']
+    df = df.assign(Name=df['FirstName'] + ' ' + df['LastName'])
     df = df.drop(columns=['FirstName', 'LastName'])
 
     age_cols = ['CalculatedAge', 'ReportedAge']
