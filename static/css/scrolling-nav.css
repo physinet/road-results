@@ -11,6 +11,13 @@ section {
   padding: 150px 0;
 }
 
+.plot {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+
 .headshot {
   width: 240px;
   border-radius: 50%;

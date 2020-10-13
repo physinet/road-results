@@ -37,10 +37,13 @@
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#about">About</a>
+            <a class="nav-link js-scroll-trigger" href="#racer">Find a racer</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#results">Results</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="#trueskill">Ratings</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#contact">Contact</a>
@@ -61,7 +64,7 @@
       <br>
       <h1>RoadReview</h1>
       <br>
-      <p class="lead">Explore your racing history</p>
+      <p class="lead">Explore your road racing history</p>
       <p class="lead">Visualize your progress</p>
       <p class="lead">Get to know your competition</p>
       <p class="lead">Anticipate your results</p>
@@ -76,48 +79,40 @@
 
   </header>
 
-  <!-- <header class="bg-primary text-white" style="background-image: url('static/background.jpg')">
-    <div class="container text-center">
-      <img src="static/background.jpg" class="img-fluid">
-      <h1>Road cycling race analysis</h1>
-      <br>
-      <p class="lead">Explore your racing history</p>
-      <p class="lead">Get to know your competition</p>
-      <p class="lead">Find successful teams</p>
-    </div>
-  </header> -->
-
-
-  <section id="about">
+  <section id="racer">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
-          <h2>About this page</h2>
-          <p class="lead">This is a great place to talk about your webpage. This template is purposefully unstyled so you can use it as a boilerplate or starting point for you own landing page designs! This template features:</p>
+          <h2>Find a racer</h2>
           <ul>
-            <li>Clickable nav links that smooth scroll to page sections</li>
-            <li>Responsive behavior when clicking nav links perfect for a one page website</li>
-            <li>Bootstrap's scrollspy feature which highlights which section of the page you're on in the navbar</li>
-            <li>Minimal custom CSS so you are free to explore your own unique design options</li>
+            <li>Search for a racer on <a href="https://results.bikereg.com/?n=racers&sn=find">BikeReg</a>.</li>
+            <li>Navigate to the racer's <a href="https://results.bikereg.com/racer/177974">summary page</a>.</li>
+            <li>Copy the URL from the address bar, paste below, and submit</a>.</li>
           </ul>
+
+          <form method="POST">
+            <input size="50" type="text" name="racer_url" id="racer_url" placeholder="https://results.bikereg.com/racer/177974">
+            <input type="submit">
+          </form>
         </div>
       </div>
-      <select>
+
+      <!-- <select>
         {% for item in race_list %}
           <option value="{{item}}">{{item}}</option>
         {% endfor %}
-      </select>
+      </select> -->
 
 
-      <form action='select_race' method="POST">
+      <!-- <form action='select_race' method="POST">
         {{ form.hidden_tag() }}
         <div style="width: 220px">
           {{ form.name }}
         </div>
         <button>Submit</button>
-      </form>
+      </form> -->
 
-      <script>
+      <!-- <script>
       $(document).ready(function() {
           $('#name').select2({  // init Select2 on form's name field
               placeholder: "{{ form.name.label.text }}",
@@ -125,7 +120,7 @@
               "width": "style"
           });
       });
-      </script>
+      </script> -->
 
       <!-- <div class="container text-center">
       <h2> Enter race name: </h2>
@@ -146,27 +141,6 @@
           </script>
         </form>
       </div> -->
-
-      <div class="container text-center">
-      <h2> Enter racer URL: </h2>
-        <form method="POST">
-          <input size="50" type="text" name="racer_url" id="autocomplete1" placeholder="https://results.bikereg.com/racer/177974">
-          <input type="submit">
-
-          <script>
-          $('#autocomplete1').autocomplete({
-              serviceUrl: '/search/racer_url',
-              dataType: 'json',
-              lookupLimit: 10,
-              minChars: 1,
-              onSearchComplete: function (query, suggestions) {
-                console.log(query);
-              }
-          });
-          </script>
-        </form>
-      </div>
-
     </div>
   </section>
 
@@ -193,7 +167,65 @@
     </div>
   </section>
 
-  <section id="contact">
+  <section id="trueskill">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-8 mx-auto">
+          <h2>Learn about the rating system</h2>
+          <ul>
+            <li>
+              RoadReview assigns a rating to each racer using the
+              <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">
+              TrueSkill™ Ranking System</a> developed by Microsoft for multiplayer online gaming.
+            </li>
+            <li>
+              Each racer's "performance" is expected to vary from race to race following a normal distribution.
+              The mean μ of this distribution is the racer's "skill", and the standard deviation σ describes both the
+              intrinsic variability and the uncertainty in the system's assessment of the racer's performance.
+            </li>
+            <div class="plot">
+              <img src="static/plots/normal.png">
+            </div>
+            <li>
+              Consider a race between two equally-rated individuals. The winner's skill rating
+              increases, while the loser's rating decreases by the same amount.
+              The performance distribution for each racer narrows, because the system
+              now knows more about both racers.
+            </li>
+            <div class="plot">
+              <img src="static/plots/2racers.png">
+            </div>
+            <li>
+              Now consider a race between two individuals with different ratings.
+              If the racer with the higher rating wins, th
+              Consider a race between two equally-rated individuals. The winner's skill rating
+              increases, while the loser's rating decreases by the same amount.
+              The performance distribution for each racer narrows, because the system
+              now knows more about both racers.
+            </li>
+            <div class="plot">
+              <img src="static/plots/2diffracers.png">
+            </div>
+          </ul>
+
+          Under this system, each racer is assumed to possess a certain amount of "skill",
+          but their "performance" varies between races. Everyone has good days and bad days.
+          Each racer's performance is assumed to follow a normal distribution, where the mean
+          is an indicator of the racer's "skill" and the standard deviation is a measure
+          of the system's confidence in that "skill." The distribution narrows as each racer
+          competes in more races. <br>
+          [[normal distribution plot here]] <br>
+          The system uses <a href="https://en.wikipedia.org/wiki/Bayesian_inference">Bayesian inference</a>
+          to
+
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="contact" class="bg-light">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
