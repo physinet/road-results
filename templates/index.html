@@ -8,10 +8,11 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>Scrolling Nav - Start Bootstrap Template</title>
+  <title>RoadReview</title>
 
   <!-- Bootstrap core CSS -->
   <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/boxicons/css/boxicons.min.css') }}" rel="stylesheet">
 
   <!-- Custom styles for this template -->
   <link href="{{ url_for('static', filename='css/scrolling-nav.css') }}" rel="stylesheet">
@@ -29,7 +30,7 @@
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
     <div class="container">
-      <a class="navbar-brand js-scroll-trigger" href="#page-top">Start Bootstrap</a>
+      <a class="navbar-brand js-scroll-trigger" href="#page-top">RoadReview</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -49,15 +50,43 @@
     </div>
   </nav>
 
-  <header class="bg-primary text-white">
+
+  <header class="jumbotron jumbotron-fluid text-white" style="background: url('static/background.jpg') no-repeat center; background-size: cover;">
+    <br>
+    <br>
+    <br>
+
+    <div class="container text-center col-lg-6" style="-moz-border-radius:10px; -webkit-border-radius:10px; border-radius:10px; background: #000; background-color: rgba(0,0,0,0.5)">
+      <br>
+      <br>
+      <h1>RoadReview</h1>
+      <br>
+      <p class="lead">Explore your racing history</p>
+      <p class="lead">Visualize your progress</p>
+      <p class="lead">Get to know your competition</p>
+      <p class="lead">Anticipate your results</p>
+      <br>
+      <br>
+
+    </div>
+    <br>
+    <br>
+    <br>
+    <br>
+
+  </header>
+
+  <!-- <header class="bg-primary text-white" style="background-image: url('static/background.jpg')">
     <div class="container text-center">
+      <img src="static/background.jpg" class="img-fluid">
       <h1>Road cycling race analysis</h1>
       <br>
       <p class="lead">Explore your racing history</p>
       <p class="lead">Get to know your competition</p>
       <p class="lead">Find successful teams</p>
     </div>
-  </header>
+  </header> -->
+
 
   <section id="about">
     <div class="container">
@@ -168,20 +197,19 @@
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
-          <h2>Contact us</h2>
-          <p class="lead">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Vero odio fugiat voluptatem dolor, provident officiis, id iusto! Obcaecati incidunt, qui nihil beatae magnam et repudiandae ipsa exercitationem, in, quo totam.</p>
+          <h2>Contact the author</h2>
+          <p class="lead">This website was created by Brian Schaefer for <a href="https://www.thedataincubator.com/">The Data Incubator</a>, September-November 2020.</p>
+          <div class="container text-center">
+           <img src="static/headshot.jpg" class="headshot">
+            <div class="social-links">
+              <a href="https://github.com/physinet/road-results" class="github"><i class="bx bxl-github"></i></a>
+              <a href="https://www.linkedin.com/in/brian-schaefer-999683190/" class="linkedin"><i class="bx bxl-linkedin"></i></a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
-
-  <!-- Footer -->
-  <footer class="py-5 bg-dark">
-    <div class="container">
-      <p class="m-0 text-center text-white">Copyright &copy; Your Website 2020</p>
-    </div>
-    <!-- /.container -->
-  </footer>
 
   <!-- Bootstrap core JavaScript -->
   <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
