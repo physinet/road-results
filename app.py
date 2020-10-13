@@ -74,6 +74,19 @@ def create_app(configfile=None):
         # script, div = make_plot()
         # return render_template('plot.html', script=script, div=div)
 
+    @app.after_request
+    def add_header(r):
+        """
+        https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
+        Add headers to both force latest IE rendering engine or Chrome Frame,
+        and also to cache the rendered page for 10 minutes.
+        """
+        r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        r.headers["Pragma"] = "no-cache"
+        r.headers["Expires"] = "0"
+        r.headers['Cache-Control'] = 'public, max-age=0'
+        return r
+
     return app
 
 
