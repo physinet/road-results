@@ -21,8 +21,8 @@ def make_plot():
 
     fig.yaxis.axis_label = "Rating"
 
-    return file_html(fig, CDN)
+    # return file_html(fig, CDN)
 
-    # script, div = components(fig, CDN)
-    #
-    # return script, div
+    script, div = components(fig, CDN)
+    
+    return script, div

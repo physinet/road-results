@@ -38,23 +38,27 @@ def create_app(configfile=None):
 
     @app.route('/')
     def index():
+        script, div = make_plot()
         return render_template('index.html', race_list=race_names,
                                              form=RaceForm(),
-                                             race_name='Test race name')
-
-    @app.route('/table')
-    def table():
-        return render_template('table.html', df=df)
+                                             race_name='Test race name',
+                                             df=df,
+                                             script=script,
+                                             div=div)
 
     @app.route('/', methods=['POST'])
     def index_post():
         racer_url = request.form['racer_url']
         if racer_url == '':
             racer_url = 'https://results.bikereg.com/racer/177974'
+        script, div = make_plot()
         return render_template('index.html', race_list=race_names,
                                              form=RaceForm(),
                                              scroll='results',
-                                             racer_url=racer_url)
+                                             racer_url=racer_url,
+                                             df=df,
+                                             script=script,
+                                             div=div)
 
     @app.route("/search/<string:box>")
     def process(box):
@@ -63,16 +67,6 @@ def create_app(configfile=None):
         suggestions = [{'value': s} for s in suggest_strs if query in s]
         print(repr(query), suggestions)
         return jsonify({"suggestions": suggestions[:5]})
-
-    @app.route('/df')
-    def render_df():
-        return render_template('df.html', df=df)
-
-    @app.route('/plot')
-    def plot():
-        return make_plot()
-        # script, div = make_plot()
-        # return render_template('plot.html', script=script, div=div)
 
     @app.after_request
     def add_header(r):
