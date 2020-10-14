@@ -6,7 +6,7 @@ from bokeh.resources import CDN
 
 def make_plot():
     fig = figure(title='Title',
-             plot_width=1000,
+             plot_width=700,
              plot_height=300,
              tools=['ypan,ywheel_zoom,reset'],
              active_scroll='ywheel_zoom')
@@ -24,5 +24,5 @@ def make_plot():
     # return file_html(fig, CDN)
 
     script, div = components(fig, CDN)
-    
+
     return script, div
