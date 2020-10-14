@@ -53,7 +53,7 @@ section {
 .table-scroll tbody {
     position: absolute;
     overflow-y: scroll;
-    height: 300px;
+    height: 400px;
 }
 
 .table-scroll tr {

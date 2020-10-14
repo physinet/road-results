@@ -4,11 +4,11 @@ from wtforms import SelectField, validators
 import pandas as pd
 import dill
 
-from plotting import make_plot
+from plotting import make_plot, make_racer_plot
 
 rows = [
-    {'a': 1, 'b': 2, 'c':3},
-    {'a': 3, 'b': 5, 'c':-6}
+    {'a': 1, 'b': 2, 'c': 3},
+    {'a': 3, 'b': 5, 'c': -6}
 ] * 17
 
 df = pd.DataFrame(rows)
@@ -25,12 +25,44 @@ df = df_race[['FirstName', 'LastName', 'TeamName', 'RaceTime']]
 race_names = ['test1', 'test2', 'test3', 'bucknell']
 possible_names = {'0': 'hans', '1': 'sepp', '3': 'max'}
 
+# My results
+file = r'C:\data\racers\177974.pkd'
+json = dill.load(open(file, 'rb'))
+df_brian = pd.read_json(json)
+columns = [str(i) for i in range(28)] + ['OffTheFront', 'OffTheBack',
+                                         'FieldSprintPlace', 'GroupSprintPlace',
+                                         'RaceTypeID', 'MetaDataUrl']
+df_brian = df_brian.drop(columns=columns).dropna(subset=['Points'])
+df_brian['RaceDate'] = df_brian['RaceDate'].apply(
+    lambda x: pd.to_datetime(x['date']))
+# df_brian = df_brian.set_index('RaceDate')
+df_brian['Place'] = f"{df_brian['Place']} / {df_brian['RacerCount']}"
+
+# Other's results
+file = r'C:\data\racers\7301.pkd'
+json = dill.load(open(file, 'rb'))
+df_other = pd.read_json(json)
+columns = [str(i) for i in range(28)] + ['OffTheFront', 'OffTheBack',
+                                         'FieldSprintPlace', 'GroupSprintPlace',
+                                         'RaceTypeID', 'MetaDataUrl']
+df_other = df_other.drop(columns=columns).dropna(subset=['Points'])
+df_other['RaceDate'] = df_other['RaceDate'].apply(
+    lambda x: pd.to_datetime(x['date']))
+df_other['Place'] = df_other.apply(
+    lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
+
+# df_other = df_other.set_index('RaceDate')
+# df_other = df_other[df_other['RaceDate'].between(pd.datetime(2015, 1, 1), pd.datetime(2016, 1, 1))]
+
 
 class RaceForm(FlaskForm):
     name = SelectField('race_name',
-                            # choices=race_names,
-                            choices=[("", "")] + [(uuid, name) for uuid, name in possible_names.items()],  # [("", "")] is needed for a placeholder
-                            validators=[validators.InputRequired()])
+                       # choices=race_names,
+                       # [("", "")] is needed for a placeholder
+                       choices=[("", "")] + [(uuid, name)
+                                             for uuid, name in possible_names.items()],
+                       validators=[validators.InputRequired()])
+
 
 def create_app(configfile=None):
     app = Flask(__name__)
@@ -38,27 +70,29 @@ def create_app(configfile=None):
 
     @app.route('/')
     def index():
-        script, div = make_plot()
+        script, div = make_racer_plot(df_brian)
         return render_template('index.html', race_list=race_names,
-                                             form=RaceForm(),
-                                             race_name='Test race name',
-                                             df=df,
-                                             script=script,
-                                             div=div)
+                               form=RaceForm(),
+                               race_name='Test race name',
+                               df=df,
+                               script=script,
+                               div=div,
+                               df_racer=df_other)
 
     @app.route('/', methods=['POST'])
     def index_post():
         racer_url = request.form['racer_url']
         if racer_url == '':
             racer_url = 'https://results.bikereg.com/racer/177974'
-        script, div = make_plot()
+        script, div = make_racer_plot(df_other)
         return render_template('index.html', race_list=race_names,
-                                             form=RaceForm(),
-                                             scroll='results',
-                                             racer_url=racer_url,
-                                             df=df,
-                                             script=script,
-                                             div=div)
+                               form=RaceForm(),
+                               scroll='results',
+                               racer_url=racer_url,
+                               df=df,
+                               script=script,
+                               div=div,
+                               df_racer=df_other)
 
     @app.route("/search/<string:box>")
     def process(box):
@@ -82,7 +116,6 @@ def create_app(configfile=None):
         return r
 
     return app
-
 
 
 # if __name__ == '__main__':
