@@ -4,7 +4,8 @@ from wtforms import SelectField, validators
 import pandas as pd
 import dill
 
-from plotting import make_plot, make_racer_plot
+from plotting import make_plot, make_racer_plot, race_map
+race_map()
 
 rows = [
     {'a': 1, 'b': 2, 'c': 3},
@@ -13,14 +14,24 @@ rows = [
 
 df = pd.DataFrame(rows)
 
-file = r'C:\data\results\races\1000.pkd'
+file = r'C:\data\results\races\9532.pkd'
 json = dill.load(open(file, 'rb'))
 df_race = pd.read_json(json)
 columns = [str(i) for i in range(28)]
 df_race = df_race.drop(columns=columns)
 
-df_race = df_race[df_race['RaceCategoryName'] == 'Category 3']
-df = df_race[['FirstName', 'LastName', 'TeamName', 'RaceTime']]
+df_race = df_race[df_race['RaceCategoryName'].str.strip() ==
+                  'Men 45-49 Masters']
+
+
+def get_placing(df):
+    # sort_values().reset_index(drop=True).index + 1
+    df['PredictedPlace'] = df['PriorPoints'].rank(method='max').astype(int)
+    return df
+
+
+df = df_race.groupby('RaceCategoryName').apply(get_placing)
+
 
 race_names = ['test1', 'test2', 'test3', 'bucknell']
 possible_names = {'0': 'hans', '1': 'sepp', '3': 'max'}
@@ -36,7 +47,9 @@ df_brian = df_brian.drop(columns=columns).dropna(subset=['Points'])
 df_brian['RaceDate'] = df_brian['RaceDate'].apply(
     lambda x: pd.to_datetime(x['date']))
 # df_brian = df_brian.set_index('RaceDate')
-df_brian['Place'] = f"{df_brian['Place']} / {df_brian['RacerCount']}"
+df_brian['Place'] = df_brian.apply(
+    lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
+df_brian['Points'] = 500 - df_brian['Points']
 
 # Other's results
 file = r'C:\data\racers\7301.pkd'
@@ -50,6 +63,7 @@ df_other['RaceDate'] = df_other['RaceDate'].apply(
     lambda x: pd.to_datetime(x['date']))
 df_other['Place'] = df_other.apply(
     lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
+df_other['Points'] = 500 - df_other['Points']
 
 # df_other = df_other.set_index('RaceDate')
 # df_other = df_other[df_other['RaceDate'].between(pd.datetime(2015, 1, 1), pd.datetime(2016, 1, 1))]
@@ -77,12 +91,13 @@ def create_app(configfile=None):
                                df=df,
                                script=script,
                                div=div,
-                               df_racer=df_other)
+                               df_racer=df_brian)
 
     @app.route('/', methods=['POST'])
     def index_post():
-        racer_url = request.form['racer_url']
-        if racer_url == '':
+        if 'racer_url' in request.form:
+            racer_url = request.form['racer_url']
+        else:
             racer_url = 'https://results.bikereg.com/racer/177974'
         script, div = make_racer_plot(df_other)
         return render_template('index.html', race_list=race_names,
@@ -101,6 +116,10 @@ def create_app(configfile=None):
         suggestions = [{'value': s} for s in suggest_strs if query in s]
         print(repr(query), suggestions)
         return jsonify({"suggestions": suggestions[:5]})
+
+    @app.route('/map')
+    def create_map():
+        return render_template('map.html')
 
     @app.after_request
     def add_header(r):

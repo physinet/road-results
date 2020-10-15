@@ -5,6 +5,12 @@ from bokeh.plotting import figure
 from bokeh.resources import CDN
 from bokeh.models import DatetimeTickFormatter, DatetimeTicker
 
+import folium
+from folium.plugins import FastMarkerCluster
+
+import pandas as pd
+from datetime import datetime
+
 
 def make_plot():
     fig = figure(title='Title',
@@ -53,3 +59,18 @@ def make_racer_plot(df_racer):
     script, div = components(fig, CDN)
 
     return script, div
+
+
+def race_map():
+    df = pd.read_pickle('C:/data/results/df.pkl')
+    df_coord = df.dropna(subset=['coord'])
+
+    m = folium.Map(location=[39.8283, -98.5795], zoom_start=4)
+
+    def add_marker(coord, name=None):
+        folium.Marker([coord[0], coord[1]], popup=None).add_to(m)
+
+    df_coord[df_coord['date'].dt.year == 2019].apply(
+        lambda row: add_marker(row['coord'], row['name']), axis=1)
+
+    m.save('templates/map.html')
