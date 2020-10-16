@@ -38,10 +38,13 @@
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="#data">Data</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#racer">Find a racer</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#results">Results</a>
+            <a class="nav-link js-scroll-trigger" href="#results">View results</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#revisit">Revisit a race</a>
@@ -175,6 +178,7 @@
     </script>
     <div class="container">
       <div class="col-lg-8 mx-auto">
+        <h2>View results</h2>
         <h5 style="text-align: center">Race history for {{ df_racer['FirstName'][0] + ' ' + df_racer['LastName'][0] }}:</h5>
         <div class="table-responsive" style="margin-bottom:400px;">
           <table class="table table-bordered table-sm table-hover table-scroll">
@@ -258,9 +262,14 @@
           <h2>Learn about the rating system</h2>
           <ul>
             <li>
-              RoadReview assigns a rating to each racer using the
+              RoadRecap assigns a rating to each racer using the
               <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">
                 TrueSkill™ Ranking System</a> developed by Microsoft for multiplayer online gaming.
+            </li>
+            <li>
+              TrueSkill™ uses <a href="https://en.wikipedia.org/wiki/Bayesian_inference">Bayesian inference</a>
+              to update each racer's rating over time, comparing their skill level to that
+              of the other racers and evaluating the probability of the race outcome.
             </li>
             <li>
               Each racer's "performance" is expected to vary from race to race following a normal distribution.
@@ -270,7 +279,7 @@
             <div class="plot">
               <img src="static/plots/normal.png">
             </div>
-            <li>
+            <!-- <li>
               Consider a race between two equally-rated individuals. The winner's skill rating
               increases, while the loser's rating decreases by the same amount.
               The performance distribution for each racer narrows, because the system
@@ -280,6 +289,20 @@
               <img src="static/plots/2racers.png">
             </div>
             <li>
+              If the racers race again and the winner claims a second victory, the skill ratings
+              change in the same direction, but by a lesser amount. A skill gap has opened,
+              so the winner's victory can be anticipated.
+            </li>
+            <div class="plot">
+              <img src="static/plots/2racers2.png">
+            </div> -->
+            <li>
+              A race between three racers.
+            </li>
+            <div class="plot">
+              <img src="static/plots/3racers.png">
+            </div>
+            <!-- <li>
               Now consider a race between two individuals with different ratings.
               If the racer with the higher rating wins, th
               Consider a race between two equally-rated individuals. The winner's skill rating
@@ -290,18 +313,7 @@
             <div class="plot">
               <img src="static/plots/2diffracers.png">
             </div>
-          </ul>
-
-          Under this system, each racer is assumed to possess a certain amount of "skill",
-          but their "performance" varies between races. Everyone has good days and bad days.
-          Each racer's performance is assumed to follow a normal distribution, where the mean
-          is an indicator of the racer's "skill" and the standard deviation is a measure
-          of the system's confidence in that "skill." The distribution narrows as each racer
-          competes in more races. <br>
-          [[normal distribution plot here]] <br>
-          The system uses <a href="https://en.wikipedia.org/wiki/Bayesian_inference">Bayesian inference</a>
-          to
-
+          </ul> -->
 
         </div>
       </div>
@@ -309,7 +321,7 @@
   </section>
 
 
-  <section id="contact" class="bg-light">
+  <section id="contact">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 text-center mx-auto">
