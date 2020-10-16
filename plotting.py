@@ -62,7 +62,8 @@ def make_racer_plot(df_racer):
 
 
 def race_map():
-    df = pd.read_pickle('C:/data/results/df.pkl')
+    df = pd.read_pickle(os.path.join('data', 'df.pkl'))
+    # df = pd.read_pickle('C:/data/results/df.pkl')
     df_coord = df.dropna(subset=['coord'])
 
     m = folium.Map(location=[39.8283, -98.5795], zoom_start=4)
