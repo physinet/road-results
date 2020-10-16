@@ -1,8 +1,10 @@
+import dill
+import os
+
 from flask import Flask, render_template, request, jsonify
 from flask_wtf import FlaskForm
 from wtforms import SelectField, validators
 import pandas as pd
-import dill
 
 from plotting import make_plot, make_racer_plot, race_map
 race_map()
@@ -14,7 +16,8 @@ rows = [
 
 df = pd.DataFrame(rows)
 
-file = r'C:\data\results\races\9532.pkd'
+# file = r'C:\data\results\races\9532.pkd'
+file = os.path.join('data', 'results', '9532.pkd')
 json = dill.load(open(file, 'rb'))
 df_race = pd.read_json(json)
 columns = [str(i) for i in range(28)]
@@ -37,7 +40,8 @@ race_names = ['test1', 'test2', 'test3', 'bucknell']
 possible_names = {'0': 'hans', '1': 'sepp', '3': 'max'}
 
 # My results
-file = r'C:\data\racers\177974.pkd'
+# file = r'C:\data\racers\177974.pkd'
+file = os.path.join('data', 'racers', '177974.pkd')
 json = dill.load(open(file, 'rb'))
 df_brian = pd.read_json(json)
 columns = [str(i) for i in range(28)] + ['OffTheFront', 'OffTheBack',
@@ -52,7 +56,8 @@ df_brian['Place'] = df_brian.apply(
 df_brian['Points'] = 500 - df_brian['Points']
 
 # Other's results
-file = r'C:\data\racers\7301.pkd'
+# file = r'C:\data\racers\7301.pkd'
+file = os.path.join('data', 'racers', '7301.pkd')
 json = dill.load(open(file, 'rb'))
 df_other = pd.read_json(json)
 columns = [str(i) for i in range(28)] + ['OffTheFront', 'OffTheBack',
