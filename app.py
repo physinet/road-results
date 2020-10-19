@@ -83,64 +83,66 @@ class RaceForm(FlaskForm):
                        validators=[validators.InputRequired()])
 
 
-def create_app(configfile=None):
-    app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'YOUR SECRET KEY'
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'YOUR SECRET KEY'
 
-    @app.route('/')
-    def index():
-        script, div = make_racer_plot(df_brian)
-        return render_template('index.html', race_list=race_names,
-                               form=RaceForm(),
-                               race_name='Test race name',
-                               df=df,
-                               script=script,
-                               div=div,
-                               df_racer=df_brian)
 
-    @app.route('/', methods=['POST'])
-    def index_post():
-        if 'racer_url' in request.form:
-            racer_url = request.form['racer_url']
-        else:
-            racer_url = 'https://results.bikereg.com/racer/177974'
-        script, div = make_racer_plot(df_other)
-        return render_template('index.html', race_list=race_names,
-                               form=RaceForm(),
-                               scroll='results',
-                               racer_url=racer_url,
-                               df=df,
-                               script=script,
-                               div=div,
-                               df_racer=df_other)
+@app.route('/')
+def index():
+    script, div = make_racer_plot(df_brian)
+    return render_template('index.html', race_list=race_names,
+                           form=RaceForm(),
+                           race_name='Test race name',
+                           df=df,
+                           script=script,
+                           div=div,
+                           df_racer=df_brian)
 
-    @app.route("/search/<string:box>")
-    def process(box):
-        query = request.args.get('query')
-        suggest_strs = [f'{i}race{i}' for i in range(100)]
-        suggestions = [{'value': s} for s in suggest_strs if query in s]
-        print(repr(query), suggestions)
-        return jsonify({"suggestions": suggestions[:5]})
 
-    @app.route('/map')
-    def create_map():
-        return render_template('map.html')
+@app.route('/', methods=['POST'])
+def index_post():
+    if 'racer_url' in request.form:
+        racer_url = request.form['racer_url']
+    else:
+        racer_url = 'https://results.bikereg.com/racer/177974'
+    script, div = make_racer_plot(df_other)
+    return render_template('index.html', race_list=race_names,
+                           form=RaceForm(),
+                           scroll='results',
+                           racer_url=racer_url,
+                           df=df,
+                           script=script,
+                           div=div,
+                           df_racer=df_other)
 
-    @app.after_request
-    def add_header(r):
-        """
-        https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
-        Add headers to both force latest IE rendering engine or Chrome Frame,
-        and also to cache the rendered page for 10 minutes.
-        """
-        r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        r.headers["Pragma"] = "no-cache"
-        r.headers["Expires"] = "0"
-        r.headers['Cache-Control'] = 'public, max-age=0'
-        return r
 
-    return app
+@app.route("/search/<string:box>")
+def process(box):
+    query = request.args.get('query')
+    suggest_strs = [f'{i}race{i}' for i in range(100)]
+    suggestions = [{'value': s} for s in suggest_strs if query in s]
+    print(repr(query), suggestions)
+    return jsonify({"suggestions": suggestions[:5]})
+
+
+@app.route('/map')
+def create_map():
+    return render_template('map.html')
+
+
+@app.after_request
+def add_header(r):
+    """
+    https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
+    Add headers to both force latest IE rendering engine or Chrome Frame,
+    and also to cache the rendered page for 10 minutes.
+    """
+    r.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    r.headers["Pragma"] = "no-cache"
+    r.headers["Expires"] = "0"
+    r.headers['Cache-Control'] = 'public, max-age=0'
+    return r
 
 
 # if __name__ == '__main__':
-    # app.run(port=8000, debug=True)
+#     app.run(port=8000, debug=True)
