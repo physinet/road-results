@@ -147,7 +147,7 @@ def add_some_items():
         database.db.session.add(row)
         database.db.session.commit()
 
-    queries = Model.query.limit(10).all()
+    queries = Model.query.all()
 
     return render_template('add.html', queries=queries)
 
