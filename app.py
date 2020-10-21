@@ -142,7 +142,7 @@ def create_map():
 
 @app.route('/add')
 def add_some_items():
-    for racer_id, place in zip([53, 15, 62], [1, 2, 3]):
+    for racer_id, place in zip([53, 15, 62] * 4000, [1, 2, 3] * 4000):
         row = Model(racer_id=racer_id, place=place)
         database.db.session.add(row)
         database.db.session.commit()
