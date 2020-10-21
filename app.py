@@ -1,10 +1,16 @@
 import dill
 import os
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from flask_wtf import FlaskForm
 from wtforms import SelectField, validators
 import pandas as pd
+
+
+import commands
+import database
+from model import Model
+
 
 from plotting import make_plot, make_racer_plot, race_map
 race_map()
@@ -85,6 +91,10 @@ class RaceForm(FlaskForm):
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'YOUR SECRET KEY'
+app.config.from_object(os.environ['APP_SETTINGS'])
+
+database.init_app(app)
+commands.init_app(app)
 
 
 @app.route('/')
@@ -128,6 +138,18 @@ def process(box):
 @app.route('/map')
 def create_map():
     return render_template('map.html')
+
+
+@app.route('/add')
+def add_some_items():
+    for racer_id, place in zip([53, 15, 62], [1, 2, 3]):
+        row = Model(racer_id=racer_id, place=place)
+        database.db.session.add(row)
+        database.db.session.commit()
+
+    queries = Model.query.all()
+
+    return render_template('add.html', queries=queries)
 
 
 @app.after_request
