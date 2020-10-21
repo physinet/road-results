@@ -1,11 +1,12 @@
 import click
 from database import db
-from model import Model
+from model import Model, add_sample_rows
 
 
 def db_create_all():
     """Creates all tables"""
     db.create_all()
+    add_sample_rows()
 
 
 def db_drop_all():
