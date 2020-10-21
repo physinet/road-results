@@ -7,3 +7,6 @@ Flask==1.1.2
 dill==0.3.2
 WTForms==2.3.3
 gunicorn==20.0.4
+flask-sqlalchemy
+psycopg2
+sqlalchemy
