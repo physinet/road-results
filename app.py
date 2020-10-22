@@ -108,7 +108,7 @@ def index_post():
     script, div = make_racer_plot(df_other)
     return render_template('index.html', race_list=race_names,
                            form=RaceForm(),
-                           scroll='results',
+                           scroll='racer',
                            racer_url=racer_url,
                            df=df,
                            script=script,

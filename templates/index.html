@@ -8,7 +8,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>RoadRecap</title>
+  <title>BikeRank</title>
 
   <!-- Bootstrap core CSS -->
   <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
@@ -22,7 +22,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/1.2.26/jquery.autocomplete.min.js"></script>
   <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.1.min.js" crossorigin="anonymous"></script>
 
-
+  <script>
+    document.location.hash = '#' + '{{ scroll }}';
+  </script>
 
 </head>
 
@@ -31,7 +33,7 @@
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
     <div class="container">
-      <a class="navbar-brand js-scroll-trigger" href="#page-top">RoadRecap</a>
+      <a class="navbar-brand js-scroll-trigger" href="#page-top">BikeRank</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -42,9 +44,6 @@
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#racer">Find a racer</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#results">View results</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#revisit">Revisit a race</a>
@@ -61,7 +60,7 @@
   </nav>
 
 
-  <header class="jumbotron jumbotron-fluid text-white" style="background: url('static/background.jpg') no-repeat center; background-size: cover;">
+  <header class="jumbotron jumbotron-fluid text-white" style="margin: 0; background: url('static/background.jpg') no-repeat center; background-size: cover;">
     <br>
     <br>
     <br>
@@ -69,9 +68,10 @@
     <div class="container text-center col-lg-6" style="-moz-border-radius:10px; -webkit-border-radius:10px; border-radius:10px; background: #000; background-color: rgba(0,0,0,0.5)">
       <br>
       <br>
-      <h1>RoadRecap</h1>
+      <h1>BikeRank</h1>
+      <h3>Skill ratings for amateur road cyclists</h3>
       <br>
-      <p class="lead">Explore your road racing history</p>
+      <p class="lead">Explore your racing history</p>
       <p class="lead">Visualize your progress</p>
       <p class="lead">Get to know your competition</p>
       <p class="lead">Anticipate your results</p>
@@ -79,22 +79,45 @@
       <br>
 
     </div>
-    <br>
-    <br>
-    <br>
-    <br>
-
   </header>
 
   <section id="data" class="bg-light">
+
+
+
     <div class="container">
+      <div class="container text-center col-lg-12">
+        <img src="https://results.bikereg.com/img/bikeRegLogo.png" class=".mx-auto .d-block" style="height:50px;">
+        <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" class=".mx-auto .d-block" style="height:50px;">
+      </div>
+      <br>
+      <div class="row text-center">
+        <div class="col">
+        <div class="numberview">
+        <h2 class="timer numberview-title numberview-number">12,000</h2>
+        <p class="numberview-text ">Races</p>
+      </div>
+      </div>
+      <div class="col">
+        <div class="numberview">
+          <h2 class="timer numberview-title numberview-number">190,000</h2>
+          <p class="numberview-text ">Racers</p>
+        </div>
+      </div>
+      <div class="col">
+        <div class="numberview">
+          <h2 class="timer numberview-title numberview-number">24,000,000</h2>
+          <p class="numberview-text ">Results</p>
+        </div>
+      </div>
+     </div>
+    </div>
+
+
+    <!-- <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
-          <h2>The dataset</h2>
-          <div class="row">
-            <img src="https://results.bikereg.com/img/bikeRegLogo.png" style="height:50px; object-fit: contain;">
-            <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" style="height:50px; object-fit: contain;">
-          </div>
+
           <ul>
             <li>> 12,000 races</li>
             <li>> 190,000 racers</li>
@@ -104,7 +127,7 @@
           <iframe class="map" src="/map" width="800" height="600"></iframe>
         </div>
       </div>
-    </div>
+    </div> -->
   </section>
 
   <section id="racer">
@@ -124,7 +147,40 @@
           </form>
         </div>
       </div>
-
+      <div class="container">
+        <div class="col-lg-8 mx-auto">
+          <h5 style="text-align: center"><br>Race history for {{ df_racer['FirstName'][0] + ' ' + df_racer['LastName'][0] }}:</h5>
+          <div class="table-responsive" style="margin-bottom:400px;">
+            <table class="table table-bordered table-sm table-hover table-scroll">
+              <thead class="thead-dark">
+                <tr>
+                  <th style="text-align: center; width: 10%" scope="col">#</th>
+                  <th style="text-align: center; width: 20%" scope="col">Date</th>
+                  <th style="text-align: center; width: 30%" scope="col">Race Name</th>
+                  <th style="text-align: center; width: 20%" scope="col">Category</th>
+                  <th style="text-align: center; width: 10%" scope="col">Place</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for i, row in df_racer[::-1].iterrows() %}
+                <tr>
+                  <th style="text-align: center; width: 10%;" scope="row">{{ loop.index }}</th>
+                  <th style="text-align: center; width: 20%;" scope="row">{{ row['RaceDate'].strftime('%B %d, %Y') }}</th>
+                  <td style="width: 30%;">{{ row['RaceName'] }}</td>
+                  <td style="width: 20%;">{{ row['RaceCategoryName'] }}</td>
+                  <td style="text-align: center; width: 10%;">{{ row['Place'] }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <br>
+        <div class="col-lg-8 mx-auto">
+          {{ div | safe }} <!-- Double { for flask -->
+          {{ script | safe }} <!-- Safe says include this as html in the output. Normally would protect from other users putting in their own js -->
+        </div>
+      </div>
       <!-- <select>
         {% for item in race_list %}
           <option value="{{item}}">{{item}}</option>
@@ -172,48 +228,8 @@
     </div>
   </section>
 
-  <section id="results" class="bg-light">
-    <script>
-      document.location.hash = '#' + '{{ scroll }}';
-    </script>
-    <div class="container">
-      <div class="col-lg-8 mx-auto">
-        <h2>View results</h2>
-        <h5 style="text-align: center">Race history for {{ df_racer['FirstName'][0] + ' ' + df_racer['LastName'][0] }}:</h5>
-        <div class="table-responsive" style="margin-bottom:400px;">
-          <table class="table table-bordered table-sm table-hover table-scroll">
-            <thead class="thead-dark">
-              <tr>
-                <th style="text-align: center; width: 10%" scope="col">#</th>
-                <th style="text-align: center; width: 20%" scope="col">Date</th>
-                <th style="text-align: center; width: 30%" scope="col">Race Name</th>
-                <th style="text-align: center; width: 20%" scope="col">Category</th>
-                <th style="text-align: center; width: 10%" scope="col">Place</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for i, row in df_racer[::-1].iterrows() %}
-              <tr>
-                <th style="text-align: center; width: 10%;" scope="row">{{ loop.index }}</th>
-                <th style="text-align: center; width: 20%;" scope="row">{{ row['RaceDate'].strftime('%B %d, %Y') }}</th>
-                <td style="width: 30%;">{{ row['RaceName'] }}</td>
-                <td style="width: 20%;">{{ row['RaceCategoryName'] }}</td>
-                <td style="text-align: center; width: 10%;">{{ row['Place'] }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <br>
-      <div class="col-lg-8 mx-auto">
-        {{ div | safe }} <!-- Double { for flask -->
-        {{ script | safe }} <!-- Safe says include this as html in the output. Normally would protect from other users putting in their own js -->
-      </div>
-    </div>
-  </section>
 
-  <section id="revisit">
+  <section id="revisit"  class="bg-light">
     <div class="container">
       <div class="col-lg-8 mx-auto">
         <h2>Find a race</h2>
@@ -255,14 +271,14 @@
     </div>
   </section>
 
-  <section id="trueskill" class="bg-light">
+  <section id="trueskill">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
           <h2>Learn about the rating system</h2>
           <ul>
             <li>
-              RoadRecap assigns a rating to each racer using the
+              BikeRank assigns a rating to each racer using the
               <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">
                 TrueSkill™ Ranking System</a> developed by Microsoft for multiplayer online gaming.
             </li>
@@ -321,7 +337,7 @@
   </section>
 
 
-  <section id="contact">
+  <section id="contact" class="bg-light">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 text-center mx-auto">
