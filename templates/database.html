@@ -1,3 +1,10 @@
+{% for col in cols %}
+  {{ col }} |
+{% endfor %}
+<br>
 {% for row in data %}
-  {{ row.racer_id }} | {{ row.place }} <br>
+  {% for col in cols %}
+    {{ row[col] }} |
+  {% endfor %}
+<br>
 {% endfor %}

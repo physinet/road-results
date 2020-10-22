@@ -9,7 +9,7 @@ import pandas as pd
 
 import commands
 import database
-from model import Model, add_sample_rows
+import model
 
 
 from plotting import make_plot, make_racer_plot, race_map
@@ -146,9 +146,11 @@ def preview_database(methods=['GET', 'POST']):
         commands.db_drop_all()
         commands.db_create_all()
     if request.args.get('add'):
-        add_sample_rows()
-    queries = Model.query.limit(50).all()
-    return render_template('database.html', data=queries)
+        model.add_table_races()
+    queries = model.Races.query.limit(50).all()
+    print(getattr(queries[0], 'race_id'))
+    return render_template('database.html', cols=queries[0].__dict__.keys(),
+                           data=[q.__dict__ for q in queries])
 
 
 @app.after_request
