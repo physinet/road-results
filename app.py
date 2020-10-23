@@ -146,10 +146,13 @@ def preview_database(methods=['GET', 'POST']):
         commands.db_drop_all()
         commands.db_create_all()
     if request.args.get('add'):
-        model.add_table_races()
+        for i in range(3000):
+            model.add_sample_rows()
+        # model.add_table_races()
     queries = model.Races.query.limit(50).all()
-    print(getattr(queries[0], 'race_id'))
-    return render_template('database.html', cols=queries[0].__dict__.keys(),
+
+    cols = model.Races.__table__.columns.keys()
+    return render_template('database.html', cols=cols,
                            data=[q.__dict__ for q in queries])
 
 
