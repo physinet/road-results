@@ -17,10 +17,18 @@
   <!-- Custom styles for this template -->
   <link href="{{ url_for('static', filename='css/scrolling-nav.css') }}" rel="stylesheet">
 
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/1.2.26/jquery.autocomplete.min.js"></script>
   <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.1.min.js" crossorigin="anonymous"></script>
+
+<!-- For altair -->
+<!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@4"></script>
+ <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@3.2.1"></script>
+ <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@3"></script> -->
+
+ <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
+ <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
+ <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.12.2"></script>
 
   <script>
     document.location.hash = '#' + '{{ scroll }}';
@@ -173,7 +181,7 @@
                   <tr>
                     <td style="text-align: center; width: 20%;">{{ row['FirstName'] + ' ' + row['LastName'] }}</td>
                     <td style="text-align: center; width: 30%;">{{ row['TeamName'] }}</td>
-                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(row['PriorPoints']) }}</td>
+                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['PriorPoints']) }}</td>
                     <td style="text-align: center; width: 10%;">{{ row['PredictedPlace'] }}</td>
                     <td style="text-align: center; width: 10%;">{{ loop.index }}</td>
                     <td style="text-align: center; width: 10%;">{{ '%.2f' | format(-row['Points'] + row['PriorPoints']) }}</td>
@@ -228,11 +236,11 @@
           </div>
         </div>
         <br>
-        <div class="col-lg-8 mx-auto">
-          {{ div | safe }} <!-- Double { for flask -->
-          {{ script | safe }} <!-- Safe says include this as html in the output. Normally would protect from other users putting in their own js -->
+        <div class="col-lg-8 mx-auto text-center">
+          <div id='racer-plot'></div>
         </div>
       </div>
+
       <!-- <select>
         {% for item in race_list %}
           <option value="{{item}}">{{item}}</option>
@@ -379,6 +387,11 @@
   <!-- Custom JavaScript for this theme -->
   <script src="{{ url_for('static', filename='js/scrolling-nav.js') }}"></script>
 
+  <!-- Altair racer plot -->
+  <script>
+        var spec = {{ chart | safe }};
+        vegaEmbed("#racer-plot", spec);
+   </script>
 </body>
 
 </html>

@@ -12,7 +12,7 @@ import database
 import model
 
 
-from plotting import make_plot, make_racer_plot
+from plotting import make_racer_plot_alt
 
 rows = [
     {'a': 1, 'b': 2, 'c': 3},
@@ -62,7 +62,7 @@ df_brian['RaceDate'] = df_brian['RaceDate'].apply(
 # df_brian = df_brian.set_index('RaceDate')
 df_brian['Place'] = df_brian.apply(
     lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
-df_brian['Points'] = 500 - df_brian['Points']
+df_brian['Points'] = 550 - df_brian['Points']
 
 
 class RaceForm(FlaskForm):
@@ -84,14 +84,14 @@ commands.init_app(app)
 
 @app.route('/')
 def index():
-    script, div = make_racer_plot(df_brian)
+    chart = make_racer_plot_alt(df_brian)
+
     return render_template('index.html', race_list=race_names,
                            form=RaceForm(),
                            race_name='Test race name',
                            df=df,
-                           script=script,
-                           div=div,
-                           df_racer=df_brian)
+                           df_racer=df_brian,
+                           chart=chart)
 
 
 @app.route('/', methods=['POST'])
@@ -100,15 +100,16 @@ def index_post():
         racer_url = request.form['racer_url']
     else:
         racer_url = 'https://results.bikereg.com/racer/177974'
-    script, div = make_racer_plot(df_brian)
+
+    chart = make_racer_plot_alt(df_brian)
+
     return render_template('index.html', race_list=race_names,
                            form=RaceForm(),
                            scroll='racer',
                            racer_url=racer_url,
                            df=df,
-                           script=script,
-                           div=div,
-                           df_racer=df_brian)
+                           df_racer=df_brian,
+                           chart=chart)
 
 
 @app.route("/search/<string:box>")
