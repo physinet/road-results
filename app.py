@@ -23,14 +23,18 @@ rows = [
 df = pd.DataFrame(rows)
 
 # file = r'C:\data\results\races\9532.pkd'
-file = os.path.join('data', 'results', '9532.pkd')
+# file = os.path.join('data', 'results', '9532.pkd')
+file = os.path.join('data', 'results', '11557.pkd')
 json = dill.load(open(file, 'rb'))
 df_race = pd.read_json(json)
 columns = [str(i) for i in range(28)]
 df_race = df_race.drop(columns=columns)
 
+# df_race = df_race[df_race['RaceCategoryName'].str.strip() ==
+#                   'Men 45-49 Masters']
 df_race = df_race[df_race['RaceCategoryName'].str.strip() ==
-                  'Men 45-49 Masters']
+                  'Men Cat 5 / Citizen']
+print(df_race)
 
 
 def get_placing(df):
@@ -60,24 +64,6 @@ df_brian['RaceDate'] = df_brian['RaceDate'].apply(
 df_brian['Place'] = df_brian.apply(
     lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
 df_brian['Points'] = 500 - df_brian['Points']
-
-# Other's results
-# file = r'C:\data\racers\7301.pkd'
-file = os.path.join('data', 'racers', '7301.pkd')
-json = dill.load(open(file, 'rb'))
-df_other = pd.read_json(json)
-columns = [str(i) for i in range(28)] + ['OffTheFront', 'OffTheBack',
-                                         'FieldSprintPlace', 'GroupSprintPlace',
-                                         'RaceTypeID', 'MetaDataUrl']
-df_other = df_other.drop(columns=columns).dropna(subset=['Points'])
-df_other['RaceDate'] = df_other['RaceDate'].apply(
-    lambda x: pd.to_datetime(x['date']))
-df_other['Place'] = df_other.apply(
-    lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
-df_other['Points'] = 500 - df_other['Points']
-
-# df_other = df_other.set_index('RaceDate')
-# df_other = df_other[df_other['RaceDate'].between(pd.datetime(2015, 1, 1), pd.datetime(2016, 1, 1))]
 
 
 class RaceForm(FlaskForm):
@@ -115,7 +101,7 @@ def index_post():
         racer_url = request.form['racer_url']
     else:
         racer_url = 'https://results.bikereg.com/racer/177974'
-    script, div = make_racer_plot(df_other)
+    script, div = make_racer_plot(df_brian)
     return render_template('index.html', race_list=race_names,
                            form=RaceForm(),
                            scroll='racer',
@@ -123,7 +109,7 @@ def index_post():
                            df=df,
                            script=script,
                            div=div,
-                           df_racer=df_other)
+                           df_racer=df_brian)
 
 
 @app.route("/search/<string:box>")
@@ -176,7 +162,3 @@ def add_header(r):
     r.headers["Expires"] = "0"
     r.headers['Cache-Control'] = 'public, max-age=0'
     return r
-
-
-# if __name__ == '__main__':
-#     app.run(port=8000, debug=True)
