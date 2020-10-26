@@ -1,9 +1,12 @@
 import dill
+import glob
+import os
 import pandas as pd
 
 from database import db
 
 from preprocess import clean
+from ratings import get_ratings
 
 
 class Races(db.Model):
@@ -16,7 +19,19 @@ class Races(db.Model):
     lng = db.Column(db.Float)
 
     def __repr__(self):
-        return f"Races: {self.racer_id, self.place}"
+        return f"Race: {self.race_id, self.name}"
+
+
+class Racers(db.Model):
+    RacerID = db.Column(db.Integer, primary_key=True)
+    Name = db.Column(db.String)
+    Age = db.Column(db.String)
+    Category = db.Column(db.Integer)
+    rating_mu = db.Column(db.Float)
+    rating_sigma = db.Column(db.Float)
+
+    def __repr__(self):
+        return f"Racer: {self.RacerID, self.Name, self.rating_mu, self.rating_sigma}"
 
 
 class Results(db.Model):
@@ -34,10 +49,10 @@ class Results(db.Model):
     prior_rating_mu = db.Column(db.Float)
     prior_rating_sigma = db.Column(db.Float)
     rating_mu = db.Column(db.Float)
-    rating_mu = db.Column(db.Float)
+    rating_sigma = db.Column(db.Float)
 
     def __repr__(self):
-        return f"Results: {self.index, self.RaceName, self.Name}"
+        return f"Result: {self.index, self.RaceName, self.Name}"
 
 
 def add_sample_rows():
@@ -66,12 +81,24 @@ def add_table_races():
 
 def add_table_results():
     """Add the results tables from locally saved DataFrames"""
-    for index in (1000,):
-        json = dill.load(open(f'C:/data/results/races/{index}.pkd', 'rb'))
+    files = glob.iglob(os.path.join(
+        'C:\\', 'data', 'results', 'races', '*.pkd'))
 
-        df = clean(pd.read_json(json)).assign(race_id=index)
+    print('Building database!')
+    for f in files:
+        index = int(os.path.split(f)[-1].split('.')[0])  # extract index
+        if index < 10000 or index > 10100:
+            continue
+        print(index)
+        json = dill.load(open(f, 'rb'))
+
+        df = pd.read_json(json)
         if df.empty:
             continue
+        df = clean(df).assign(race_id=index)
+
+        df = get_ratings(df)
+
         cols = ['Place', 'Name', 'Age', 'Category', 'RacerID', 'TeamID',
                 'TeamName', 'RaceName', 'RaceCategoryName', 'race_id']
         df[cols].to_sql('results', db.engine, if_exists='append', index=False)

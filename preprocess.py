@@ -1,23 +1,24 @@
 import re
 import numpy as np
 
+
 def clean(df):
     '''
     Cleans dataframe for each race
     '''
     # Drop redundant and unneeded columns
     columns = [str(i) for i in range(28)] + ['RaceCategoryID',
-                                           'OffTheFront',
-                                           'OffTheBack',
-                                           'GroupSprintPlace',
-                                           'FieldSprintPlace',
-                                           'License',
-                                           'Starters',
-                                           'FinishPhotoUrl',
-                                           'MetaDataUrl',
-                                           'ResultID',
-                                           'RacerCount'
-                                           ]
+                                             'OffTheFront',
+                                             'OffTheBack',
+                                             'GroupSprintPlace',
+                                             'FieldSprintPlace',
+                                             'License',
+                                             'Starters',
+                                             'FinishPhotoUrl',
+                                             'MetaDataUrl',
+                                             'ResultID',
+                                             'RacerCount'
+                                             ]
     df = df.drop(columns=columns)
 
     df = handle_missing(df)
@@ -27,6 +28,7 @@ def clean(df):
     df = sort_columns(df)
 
     return df
+
 
 def handle_missing(df):
     '''
@@ -38,6 +40,7 @@ def handle_missing(df):
     df.loc[:, 'IsDQ'] = df.loc[:, 'IsDQ'].fillna(0)
     return df.drop(columns=['IsDnf', 'IsDNP'])
 
+
 def process_rider(df):
     '''
     Does preprocessing related to each individual rider:
@@ -46,7 +49,8 @@ def process_rider(df):
     - Consolidates age columns
     '''
     # Missing names - there may be more!
-    df = df[~df['RacerID'].isin([3288, 61706, 832, 351])]
+    df = df[~df['RacerID'].isin([3288, 61706, 832, 351])
+            ].dropna(subset=['FirstName', 'LastName'])
 
     # Combine FirstName, Lastname and check for digits
     df = df.assign(Name=df['FirstName'] + ' ' + df['LastName'])
@@ -59,6 +63,7 @@ def process_rider(df):
     df = df.drop(columns=age_cols)
     return df
 
+
 def process_team(df):
     '''
     Does preprocessing related to each team:
@@ -69,11 +74,13 @@ def process_team(df):
     df.loc[df['TeamName'].str.lower().isin(bad_names), 'TeamName'] = np.nan
     return df
 
+
 def process_time(df):
     '''
     Preprocesses race time
     '''
     return df
+
 
 def sort_columns(df):
     '''
@@ -81,5 +88,5 @@ def sort_columns(df):
     '''
     df = df.astype({'Place': float, 'IsDQ': bool, 'Category': float})
     df = df[['Place', 'RaceTime', 'Name', 'Age', 'Category', 'RacerID',
-            'TeamID', 'TeamName', 'RaceName', 'RaceCategoryName', 'IsDQ']]
+             'TeamID', 'TeamName', 'RaceName', 'RaceCategoryName', 'IsDQ']]
     return df

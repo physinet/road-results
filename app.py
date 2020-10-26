@@ -33,7 +33,7 @@ df_race = df_race.drop(columns=columns)
 #                   'Men 45-49 Masters']
 df_race = df_race[df_race['RaceCategoryName'].str.strip() ==
                   'Men Cat 5 / Citizen']
-print(df_race)
+# print(df_race)
 
 
 def get_placing(df):
@@ -137,9 +137,10 @@ def preview_database(methods=['GET', 'POST']):
         # model.add_table_races()
         model.add_table_results()
 
-    queries = model.Results.query.limit(50).all()
+    queries = model.Results.query.limit(500).all()
 
     cols = model.Results.__table__.columns.keys()
+
     return render_template('database.html', cols=cols,
                            data=[q.__dict__ for q in queries])
 
