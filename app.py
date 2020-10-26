@@ -12,8 +12,7 @@ import database
 import model
 
 
-from plotting import make_plot, make_racer_plot, race_map
-race_map()
+from plotting import make_plot, make_racer_plot
 
 rows = [
     {'a': 1, 'b': 2, 'c': 3},
