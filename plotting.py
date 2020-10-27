@@ -19,8 +19,9 @@ def make_racer_plot_alt(df_racer):
     df_racer['lowersigma'] = df_racer['Points'] - df_racer['sigma']
 
     mu = alt.Chart(df_racer.reset_index()).encode(
-        x=alt.X('index', title='Race number', axis=alt.Axis(tickMinStep=1)),
-        y=alt.Y('Points', title='Rating'),
+        x=alt.X('index', title='Race number',
+                axis=alt.Axis(tickMinStep=1, grid=False)),
+        y=alt.Y('Points', title='Rating', axis=alt.Axis(grid=False)),
         tooltip=['RaceName', 'Place']
     )
 

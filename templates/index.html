@@ -34,6 +34,8 @@
     document.location.hash = '#' + '{{ scroll }}';
   </script>
 
+<!-- Icon -->
+<link href="data:image/x-icon;base64,AAABAAEAEBAAAAAAAABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYZHesXGh//Fxof/xcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8WGR3rAAAAABYZHvUAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAwMEFAAAAAAXGh//AAAAAAAAAAAAAAAAAAAAABYZHvUXGh//AAAAAAAAAAAAAAAAAAAAAA8RFZcAAAAAAAAAABcaH/8XGh//Fxof/w8RFZIAAAAAAAAAAAAAAAAXGh//Fxof/wAAAAAAAAAAFxof/wAAAAASFBiwAAAAABcaH/8UFxvaAAAAABETF6QAAAAAFxof/wAAAAAAAAAAFxof/xUXHNkAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8AAAAAAAAAABYZHukXGh//DhIVhAAAAAAAAAAAAAAAABUXHNkAAAAAERMXnhcaH/8XGh//Fxof/hcaH/8AAAAAAAAAAAAAAAAXGh//AAAAABYZHvwXGh//Fxof/xETFp4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGR7yFxoe8RUYHfAVGB3uFRgd7g0OEnUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAAAAABcaH/8XGh//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAP//AAD//wAA//8AAIfhAAB73gAAew4AAGpWAABxjgAAg6EAAPg/AAD7nwAA+/8AAP//AAD//wAA//8AAA==" rel="icon" type="image/x-icon" />
 </head>
 
 <body id="page-top">
@@ -163,27 +165,33 @@
             <input type="submit">
           </form>
           <br>
-          <h5 style="text-align: center">Race recap for {{ df['RaceName'].values[0] }}:</h5>
+          <h5 style="text-align: center">
+            {{ df['RaceName'].values[0] }} • May 19, 2019
+            <br>
+            {{ df['RaceCategoryName'].values[0] }}
+          </h5>
             <div class="table" style="margin-bottom:300px;">
               <table class="table table-bordered table-sm table-hover table-scroll">
                 <thead class="thead-dark">
                   <tr>
-                    <th style="text-align: center; width: 20%" scope="col">Name</th>
-                    <th style="text-align: center; width: 30%" scope="col">Team</th>
-                    <th style="text-align: center; width: 10%" scope="col">Prior Rating</th>
+                    <th style="text-align: center; width: 15%" scope="col">Name</th>
+                    <th style="text-align: center; width: 25%" scope="col">Team</th>
+                    <th style="text-align: center; width: 10%" scope="col">Rating</th>
                     <th style="text-align: center; width: 10%" scope="col">Predicted Place</th>
                     <th style="text-align: center; width: 10%" scope="col">Actual Place</th>
+                    <th style="text-align: center; width: 10%" scope="col">Adjusted Rating</th>
                     <th style="text-align: center; width: 10%" scope="col">Rating Change</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for i, row in df.iterrows() %}
                   <tr>
-                    <td style="text-align: center; width: 20%;">{{ row['FirstName'] + ' ' + row['LastName'] }}</td>
-                    <td style="text-align: center; width: 30%;">{{ row['TeamName'] }}</td>
+                    <td style="text-align: center; width: 15%;">{{ row['FirstName'] + ' ' + row['LastName'] }}</td>
+                    <td style="text-align: center; width: 25%;">{{ row['TeamName'] }}</td>
                     <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['PriorPoints']) }}</td>
                     <td style="text-align: center; width: 10%;">{{ row['PredictedPlace'] }}</td>
                     <td style="text-align: center; width: 10%;">{{ loop.index }}</td>
+                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['Points']) }}</td>
                     <td style="text-align: center; width: 10%;">{{ '%.2f' | format(-row['Points'] + row['PriorPoints']) }}</td>
                   </tr>
                   {% endfor %}
