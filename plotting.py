@@ -1,78 +1,43 @@
 import numpy as np
 import os
 
-from bokeh.embed import components, file_html
-from bokeh.plotting import figure
-from bokeh.resources import CDN
-from bokeh.models import DatetimeTickFormatter, DatetimeTicker
-
-import folium
-from folium.plugins import FastMarkerCluster
-
 import pandas as pd
 from datetime import datetime
 
-
-def make_plot():
-    fig = figure(title='Title',
-                 plot_width=700,
-                 plot_height=300,
-                 tools=['ypan,ywheel_zoom,reset'],
-                 active_scroll='ywheel_zoom')
-
-    for i in range(10):
-        fake_times = np.random.random(5)
-        fake_ratings = np.random.random(5) * 10
-        argsort = fake_times.argsort()
-        fake_times = fake_times[argsort]
-        fake_ratings = fake_ratings[argsort]
-        fig.line(x=fake_times, y=fake_ratings,
-                 line_color='#000000', line_width=3)
-
-    fig.yaxis.axis_label = "Rating"
-
-    # return file_html(fig, CDN)
-
-    script, div = components(fig, CDN)
-
-    return script, div
+import altair as alt
 
 
-def make_racer_plot(df_racer):
-    name = df_racer['FirstName'][0] + ' ' + df_racer['LastName'][0]
-    fig = figure(title=f'Race history for {name}',
-                 plot_width=700,
-                 plot_height=300,
-                 tools=['ypan,ywheel_zoom,reset'],
-                 active_scroll='ywheel_zoom')
+def make_racer_plot_alt(df_racer):
+    """Plot each racer's rating over time using altair"""
 
-    data = df_racer['Points'].rolling(3).mean()
-    fig.line(x=data.index, y=data,
-             line_color='#000000', line_width=3)
+    np.random.seed(42)
 
-    fig.yaxis.axis_label = "Rating"
+    df_racer['sigma'] = 10
+    df_racer['sigma'] = df_racer['sigma'].apply(
+        lambda x: x + np.random.randint(10, 50))
+    df_racer['uppersigma'] = df_racer['Points'] + df_racer['sigma']
+    df_racer['lowersigma'] = df_racer['Points'] - df_racer['sigma']
 
-    # fig.xaxis.formatter = DatetimeTickFormatter(days=['%b %d %Y'])
-    # fig.xaxis.ticker = DatetimeTicker(desired_num_ticks=10)
+    mu = alt.Chart(df_racer.reset_index()).encode(
+        x=alt.X('index', title='Race number',
+                axis=alt.Axis(tickMinStep=1, grid=False)),
+        y=alt.Y('Points', title='Rating', axis=alt.Axis(grid=False)),
+        tooltip=['RaceName', 'Place']
+    )
 
-    # return file_html(fig, CDN)
+    mu = mu.mark_line(color='black') + mu.mark_point(color='black')
 
-    script, div = components(fig, CDN)
+    sigma = alt.Chart(df_racer.reset_index()).encode(
+        x='index',
+        y='uppersigma',
+        y2='lowersigma'
+    ).mark_area(opacity=0.3)
 
-    return script, div
+    chart = sigma + mu
 
+    chart = chart.configure_axis(
+        labelFontSize=16,
+        titleFontSize=20
+    ).properties(width=600, height=300, background="transparent")
 
-def race_map():
-    df = pd.read_pickle(os.path.join('data', 'df.pkl'))
-    # df = pd.read_pickle('C:/data/results/df.pkl')
-    df_coord = df.dropna(subset=['coord'])
-
-    m = folium.Map(location=[39.8283, -98.5795], zoom_start=4)
-
-    def add_marker(coord, name=None):
-        folium.Marker([coord[0], coord[1]], popup=None).add_to(m)
-
-    df_coord[df_coord['date'].dt.year == 2019].apply(
-        lambda row: add_marker(row['coord'], row['name']), axis=1)
-
-    m.save('templates/map.html')
+    return chart.to_json()

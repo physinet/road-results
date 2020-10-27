@@ -17,15 +17,25 @@
   <!-- Custom styles for this template -->
   <link href="{{ url_for('static', filename='css/scrolling-nav.css') }}" rel="stylesheet">
 
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/1.2.26/jquery.autocomplete.min.js"></script>
   <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.1.min.js" crossorigin="anonymous"></script>
+
+<!-- For altair -->
+<!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@4"></script>
+ <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@3.2.1"></script>
+ <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@3"></script> -->
+
+ <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
+ <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
+ <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.12.2"></script>
 
   <script>
     document.location.hash = '#' + '{{ scroll }}';
   </script>
 
+<!-- Icon -->
+<link href="data:image/x-icon;base64,AAABAAEAEBAAAAAAAABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYZHesXGh//Fxof/xcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8WGR3rAAAAABYZHvUAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAwMEFAAAAAAXGh//AAAAAAAAAAAAAAAAAAAAABYZHvUXGh//AAAAAAAAAAAAAAAAAAAAAA8RFZcAAAAAAAAAABcaH/8XGh//Fxof/w8RFZIAAAAAAAAAAAAAAAAXGh//Fxof/wAAAAAAAAAAFxof/wAAAAASFBiwAAAAABcaH/8UFxvaAAAAABETF6QAAAAAFxof/wAAAAAAAAAAFxof/xUXHNkAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8AAAAAAAAAABYZHukXGh//DhIVhAAAAAAAAAAAAAAAABUXHNkAAAAAERMXnhcaH/8XGh//Fxof/hcaH/8AAAAAAAAAAAAAAAAXGh//AAAAABYZHvwXGh//Fxof/xETFp4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGR7yFxoe8RUYHfAVGB3uFRgd7g0OEnUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAAAAABcaH/8XGh//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAP//AAD//wAA//8AAIfhAAB73gAAew4AAGpWAABxjgAAg6EAAPg/AAD7nwAA+/8AAP//AAD//wAA//8AAA==" rel="icon" type="image/x-icon" />
 </head>
 
 <body id="page-top">
@@ -40,16 +50,13 @@
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#data">Data</a>
+            <a class="nav-link js-scroll-trigger" href="#revisit">Find a race</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#racer">Find a racer</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#revisit">Revisit a race</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#trueskill">Ratings</a>
+            <a class="nav-link js-scroll-trigger" href="#trueskill">About the ratings</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#contact">Contact</a>
@@ -87,30 +94,47 @@
 
     <div class="container">
       <div class="container text-center col-lg-12">
-        <img src="https://results.bikereg.com/img/bikeRegLogo.png" class=".mx-auto .d-block" style="height:50px;">
-        <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" class=".mx-auto .d-block" style="height:50px;">
+        <h2>Place isn't everything</h2>
+        <p style="font-size: 14pt;">
+          BikeRank uses the <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">
+          TrueSkill™ Ranking System</a>
+          to analyze the results of amateur road cycling races.
+          <br>
+          With each new race, BikeRank updates the skill ratings for each racer considering the entire racing history of the field.
+          <br>
+          Place is just a number - BikeRank reveals each racer's skill.
+        </p>
       </div>
       <br>
       <div class="row text-center">
         <div class="col">
         <div class="numberview">
-        <h2 class="timer numberview-title numberview-number">12,000</h2>
+        <h2 class="timer numberview-title numberview-number">>12,000</h2>
         <p class="numberview-text ">Races</p>
       </div>
       </div>
       <div class="col">
         <div class="numberview">
-          <h2 class="timer numberview-title numberview-number">190,000</h2>
+          <h2 class="timer numberview-title numberview-number">>190,000</h2>
           <p class="numberview-text ">Racers</p>
         </div>
       </div>
       <div class="col">
         <div class="numberview">
-          <h2 class="timer numberview-title numberview-number">24,000,000</h2>
+          <h2 class="timer numberview-title numberview-number">>24,000,000</h2>
           <p class="numberview-text ">Results</p>
         </div>
       </div>
      </div>
+     <br>
+     <div class="container text-center col-lg-12">
+       <img src="https://results.bikereg.com/img/bikeRegLogo.png" class=".mx-auto .d-block" style="height:50px;">
+       <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" class=".mx-auto .d-block" style="height:50px;">
+      </div>
+    </div>
+    <br>
+    <div class="container text-center col-lg-12" style="font-size: 14pt;">
+      15 years of race results in the United States from <a href="https://www.road-results.com/">https://www.road-results.com/</a>
     </div>
 
 
@@ -130,16 +154,60 @@
     </div> -->
   </section>
 
-  <section id="racer">
+
+    <section id="revisit">
+      <div class="container">
+        <div class="col-lg-10 mx-auto text-center">
+          <h2>Find a race</h2>
+          Enter <a href="https://results.bikereg.com/race/11456">BikeReg race page</a> URL:
+          <form method="POST">
+            <input size="50" type="text" name="race_url" id="race_url" placeholder="https://results.bikereg.com/race/11456">
+            <input type="submit">
+          </form>
+          <br>
+          <h5 style="text-align: center">
+            {{ df['RaceName'].values[0] }} • May 19, 2019
+            <br>
+            {{ df['RaceCategoryName'].values[0] }}
+          </h5>
+            <div class="table" style="margin-bottom:300px;">
+              <table class="table table-bordered table-sm table-hover table-scroll">
+                <thead class="thead-dark">
+                  <tr>
+                    <th style="text-align: center; width: 15%" scope="col">Name</th>
+                    <th style="text-align: center; width: 25%" scope="col">Team</th>
+                    <th style="text-align: center; width: 10%" scope="col">Rating</th>
+                    <th style="text-align: center; width: 10%" scope="col">Predicted Place</th>
+                    <th style="text-align: center; width: 10%" scope="col">Actual Place</th>
+                    <th style="text-align: center; width: 10%" scope="col">Adjusted Rating</th>
+                    <th style="text-align: center; width: 10%" scope="col">Rating Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for i, row in df.iterrows() %}
+                  <tr>
+                    <td style="text-align: center; width: 15%;">{{ row['FirstName'] + ' ' + row['LastName'] }}</td>
+                    <td style="text-align: center; width: 25%;">{{ row['TeamName'] }}</td>
+                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['PriorPoints']) }}</td>
+                    <td style="text-align: center; width: 10%;">{{ row['PredictedPlace'] }}</td>
+                    <td style="text-align: center; width: 10%;">{{ loop.index }}</td>
+                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['Points']) }}</td>
+                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(-row['Points'] + row['PriorPoints']) }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <section id="racer"   class="bg-light">
     <div class="container">
       <div class="row">
-        <div class="col-lg-8 mx-auto">
+        <div class="col-lg-10 mx-auto text-center">
           <h2>Find a racer</h2>
-          <ul>
-            <li>Search for a racer on <a href="https://results.bikereg.com/?n=racers&sn=find">BikeReg</a>.</li>
-            <li>Navigate to the racer's <a href="https://results.bikereg.com/racer/177974">summary page</a>.</li>
-            <li>Copy the URL from the address bar, paste below, and submit</a>.</li>
-          </ul>
+          Enter <a href="https://results.bikereg.com/race/11456">BikeReg racer page</a> URL:
 
           <form method="POST">
             <input size="50" type="text" name="racer_url" id="racer_url" placeholder="https://results.bikereg.com/racer/177974">
@@ -148,7 +216,7 @@
         </div>
       </div>
       <div class="container">
-        <div class="col-lg-8 mx-auto">
+        <div class="col-lg-10 mx-auto">
           <h5 style="text-align: center"><br>Race history for {{ df_racer['FirstName'][0] + ' ' + df_racer['LastName'][0] }}:</h5>
           <div class="table-responsive" style="margin-bottom:400px;">
             <table class="table table-bordered table-sm table-hover table-scroll">
@@ -176,11 +244,11 @@
           </div>
         </div>
         <br>
-        <div class="col-lg-8 mx-auto">
-          {{ div | safe }} <!-- Double { for flask -->
-          {{ script | safe }} <!-- Safe says include this as html in the output. Normally would protect from other users putting in their own js -->
+        <div class="col-lg-8 mx-auto text-center">
+          <div id='racer-plot'></div>
         </div>
       </div>
+
       <!-- <select>
         {% for item in race_list %}
           <option value="{{item}}">{{item}}</option>
@@ -229,53 +297,11 @@
   </section>
 
 
-  <section id="revisit"  class="bg-light">
-    <div class="container">
-      <div class="col-lg-8 mx-auto">
-        <h2>Find a race</h2>
-        <ul>
-          <li>Search for a race on <a href="https://results.bikereg.com/?n=results&sn=all">BikeReg</a>.</li>
-          <li>Navigate to the race <a href="https://results.bikereg.com/race/11456">summary page</a>.</li>
-          <li>Copy the URL from the address bar, paste below, and submit</a>.</li>
-        </ul>
-        <form method="POST">
-          <input size="50" type="text" name="race_url" id="race_url" placeholder="https://results.bikereg.com/race/11456">
-          <input type="submit">
-        </form>
-        <h5 style="text-align: center">Race recap for {{ df['RaceName'].values[0] }}:</h5>
-        <div class="table-responsive" style="margin-bottom:300px;">
-          <table class="table table-bordered table-sm table-hover table-scroll">
-            <thead class="thead-dark">
-              <tr>
-                <th style="text-align: center; width: 25%" scope="col">Name</th>
-                <th style="text-align: center; width: 30%" scope="col">Team</th>
-                <th style="text-align: center; width: 15%" scope="col">Predicted<br>Place</th>
-                <th style="text-align: center; width: 15%" scope="col">Actual<br>Place</th>
-                <th style="text-align: center; width: 15%" scope="col">Rating<br>Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for i, row in df.iterrows() %}
-              <tr>
-                <td style="width: 25%;">{{ row['FirstName'] + ' ' + row['LastName'] }}</td>
-                <td style="width: 30%;">{{ row['TeamName'] }}</td>
-                <td style="text-align: center; width: 15%;">{{ row['PredictedPlace'] }}</td>
-                <td style="text-align: center; width: 15%;">{{ loop.index }}</td>
-                <td style="text-align: center; width: 15%;">{{ '%.2f' | format(-row['Points'] + row['PriorPoints']) }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section id="trueskill">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto">
-          <h2>Learn about the rating system</h2>
+          <h2 style="text-align: center;">Learn about the rating system</h2>
           <ul>
             <li>
               BikeRank assigns a rating to each racer using the
@@ -369,6 +395,11 @@
   <!-- Custom JavaScript for this theme -->
   <script src="{{ url_for('static', filename='js/scrolling-nav.js') }}"></script>
 
+  <!-- Altair racer plot -->
+  <script>
+        var spec = {{ chart | safe }};
+        vegaEmbed("#racer-plot", spec);
+   </script>
 </body>
 
 </html>
