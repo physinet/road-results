@@ -8,11 +8,22 @@ env = ts.TrueSkill(backend='scipy', draw_probability=0)
 
 def _get_ratings(df):
     """Get ratings for a DataFrame of racers. Every place must be unique"""
-    return df
+    return df  
 
-    assert (df['Place'].value_counts() == 1).all()
+    assert df['RacerID'].is_unique
+    assert df['Place'].is_unique
+    assert df['Place'].dropna().is_monotonic_increasing  # drop DNFs
 
-    racers = model.Racers.query.filter(Racers.RacerID.in_(df['RacerID'])).all()
+    # Insert results into table with default ratings
+    # session.insert
+
+    # Join with racers table and update ratings in results table if they exist
+    existing_ratings = session.query(Racers.RacerID, Racers.rating_mu,
+                                     Racers.rating_sigma) \
+                              .filter(Racers.RacerID.in_(series)) \
+                              .all()
+
+    # racers = model.Racers.query.filter(Racers.RacerID.in_(df['RacerID'])).all()
     # df['rating'].update(racers)
 
 
