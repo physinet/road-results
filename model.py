@@ -3,10 +3,10 @@ import glob
 import os
 import pandas as pd
 
+from sqlalchemy import update
+
 from database import db
 
-from preprocess import clean
-from ratings import get_ratings
 
 
 class Races(db.Model):
@@ -21,6 +21,23 @@ class Races(db.Model):
     def __repr__(self):
         return f"Race: {self.race_id, self.name}"
 
+    @classmethod
+    def add_from_df(cls, df):
+        """Add the race metadata table from a DataFrame"""
+        raise Exception('Move df loading to external!!')
+        df = pd.read_pickle('C:/data/results/df.pkl')
+
+        # Change coordinates tuple to two columns
+        def get_lat_lng(x):
+            if x['coord']:
+                x['lat'] = float(x['coord'][0])
+                x['lng'] = float(x['coord'][1])
+            return x
+        df = df.apply(get_lat_lng, axis=1).reset_index()
+
+        cols = ['race_id', 'name', 'date', 'loc', 'json_url', 'lat', 'lng']
+        df[cols].to_sql('races', db.engine, if_exists='replace')
+
 
 class Racers(db.Model):
     RacerID = db.Column(db.Integer, primary_key=True)
@@ -32,6 +49,48 @@ class Racers(db.Model):
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.rating_mu, self.rating_sigma}"
+
+    @classmethod
+    def _add_from_df(cls, df):
+        """Add to the racers table from a DataFrame"""
+        existing_racers = cls.query \
+                             .with_entities(cls.RacerID) \
+                             .filter(cls.RacerID.in_(df['RacerID'])) \
+                             .all()
+        cols = ['RacerID', 'Name', 'Age', 'Category', 'rating_mu', 'rating_sigma']
+        rows = ~df['RacerID'].isin(map(lambda x: x[0], existing_racers))
+        df[rows][cols].to_sql('racers', db.engine, if_exists='append',
+                index=False, method='multi')
+
+
+    @classmethod
+    def add_from_df(cls, df):
+        """Add to the racers table from a results DataFrame. Add by group to
+           avoid primary keys"""
+
+        df = df.groupby(['RaceCategoryName']).apply(cls._add_from_df)
+        return df
+
+
+    @classmethod
+    def get_ratings(cls, racer_ids):
+        """Get ratings given a list of RacerID values"""
+        return cls.query\
+                  .with_entities(cls.RacerID,
+                                 cls.rating_mu,
+                                 cls.rating_sigma) \
+                  .filter(cls.RacerID.in_(racer_ids)) \
+                  .all()
+
+    @classmethod
+    def update_ratings(cls, racers, rating_mu, rating_sigma):
+        """Update ratings given lists of RacerID values, mu, and sigma"""
+        return
+        cls.merge().where(cls.RacerID.in_(racers)).values(
+            rating_mu=rating_mu,
+            rating_sigma=rating_sigma
+        )
+        db.session.commit()
 
 
 class Results(db.Model):
@@ -54,6 +113,15 @@ class Results(db.Model):
     def __repr__(self):
         return f"Result: {self.index, self.RaceName, self.Name}"
 
+    @classmethod
+    def add_from_df(cls, df):
+        """Add to the results table from a DataFrame"""
+        cols = ['Place', 'Name', 'Age', 'Category', 'RacerID', 'TeamID',
+                'TeamName', 'RaceName', 'RaceCategoryName', 'race_id']
+        df[cols].to_sql('results', db.engine, if_exists='append',
+                index=False, method='multi')
+
+
 
 def add_sample_rows():
     """Add some sample rows to the database"""
@@ -61,44 +129,3 @@ def add_sample_rows():
         row = Races(lat=lat, lng=lng)
         db.session.add(row)
         db.session.commit()
-
-
-def add_table_races():
-    """Add the race metadata table from locally saved DataFrame"""
-    df = pd.read_pickle('C:/data/results/df.pkl')
-
-    # Change coordinates tuple to two columns
-    def get_lat_lng(x):
-        if x['coord']:
-            x['lat'] = float(x['coord'][0])
-            x['lng'] = float(x['coord'][1])
-        return x
-    df = df.apply(get_lat_lng, axis=1).reset_index()
-
-    cols = ['race_id', 'name', 'date', 'loc', 'json_url', 'lat', 'lng']
-    df[cols].to_sql('races', db.engine, if_exists='replace')
-
-
-def add_table_results():
-    """Add the results tables from locally saved DataFrames"""
-    files = glob.iglob(os.path.join(
-        'C:\\', 'data', 'results', 'races', '*.pkd'))
-
-    print('Building database!')
-    for f in files:
-        index = int(os.path.split(f)[-1].split('.')[0])  # extract index
-        if index < 10000 or index > 10100:
-            continue
-        print(index)
-        json = dill.load(open(f, 'rb'))
-
-        df = pd.read_json(json)
-        if df.empty:
-            continue
-        df = clean(df).assign(race_id=index)
-
-        df = get_ratings(df)
-
-        cols = ['Place', 'Name', 'Age', 'Category', 'RacerID', 'TeamID',
-                'TeamName', 'RaceName', 'RaceCategoryName', 'race_id']
-        df[cols].to_sql('results', db.engine, if_exists='append', index=False)

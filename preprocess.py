@@ -26,9 +26,23 @@ def clean(df):
     df = process_team(df)
     df = process_time(df)
     df = sort_columns(df)
+    df = df.drop_duplicates(['RaceCategoryName', 'RacerID'])
+    df.groupby(['RaceCategoryName']).apply(check_unique_placings)
+    df.groupby(['RaceCategoryName']).apply(check_placing_order)
 
     return df
 
+
+def check_placing_order(df):
+    """Checks that the numerical values for place are in ascending order."""
+    assert df['Place'].dropna().is_monotonic_increasing
+
+def check_unique_placings(df):
+    """Checks to make sure all placings are unique. Sometimes results are
+       listed as ties, and sometimes people are duplicated or in the wrong
+       spot."""
+    if not df['Place'].dropna().is_unique:
+        print('Places not unique!', df['Place'])
 
 def handle_missing(df):
     '''

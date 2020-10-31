@@ -1,5 +1,6 @@
 import dill
 import os
+import glob
 
 from flask import Flask, render_template, request, jsonify, redirect
 from flask_wtf import FlaskForm
@@ -10,7 +11,8 @@ import pandas as pd
 import commands
 import database
 import model
-
+from ratings import get_ratings
+from preprocess import clean
 
 from plotting import make_racer_plot_alt
 
@@ -135,11 +137,14 @@ def preview_database(methods=['GET', 'POST']):
         # for i in range(3000):
         # model.add_sample_rows()
         # model.add_table_races()
-        model.add_table_results()
+        add_table_results()
+    if request.args.get('table'):
+        table = request.args.get('table')
+    else:
+        table = 'Results'
+    queries = getattr(model, table).query.limit(1000).all()
 
-    queries = model.Results.query.limit(500).all()
-
-    cols = model.Results.__table__.columns.keys()
+    cols = getattr(model, table).__table__.columns.keys()
 
     return render_template('database.html', cols=cols,
                            data=[q.__dict__ for q in queries])
@@ -163,3 +168,26 @@ def add_header(r):
     r.headers["Expires"] = "0"
     r.headers['Cache-Control'] = 'public, max-age=0'
     return r
+
+def add_table_results():
+    files = glob.iglob(os.path.join(
+        'C:\\', 'data', 'results', 'races', '*.pkd'))
+
+    print('Building database!')
+    for f in files:
+        index = int(os.path.split(f)[-1].split('.')[0])  # extract index
+        if index < 10000 or index > 10100:
+            continue
+        print(index)
+        json = dill.load(open(f, 'rb'))
+
+        df = pd.read_json(json)
+        if df.empty:
+            continue
+        df = clean(df).assign(race_id=index)
+        if df.empty:
+            continue
+
+        model.Results.add_from_df(df)
+        df = get_ratings(df)
+        model.Racers.add_from_df(df)
