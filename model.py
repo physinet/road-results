@@ -52,7 +52,7 @@ class Racers(db.Model):
 
     @classmethod
     def _add_from_df(cls, df):
-        """Add to the racers table from a DataFrame"""
+        """Add new racers to the racers table from a DataFrame"""
         existing_racers = cls.query \
                              .with_entities(cls.RacerID) \
                              .filter(cls.RacerID.in_(df['RacerID'])) \
@@ -67,30 +67,34 @@ class Racers(db.Model):
     def add_from_df(cls, df):
         """Add to the racers table from a results DataFrame. Add by group to
            avoid primary keys"""
-
-        df = df.groupby(['RaceCategoryName']).apply(cls._add_from_df)
-        return df
+        if df['RaceCategoryName'].nunique() == 1:  # If only one group, apply to whole df
+            return cls._add_from_df(df)
+        else:  # There is a confusing issue here if there is only one group
+            return df.groupby(['RaceCategoryName']).apply(cls._add_from_df)
 
 
     @classmethod
     def get_ratings(cls, racer_ids):
-        """Get ratings given a list of RacerID values"""
-        return cls.query\
-                  .with_entities(cls.RacerID,
-                                 cls.rating_mu,
-                                 cls.rating_sigma) \
-                  .filter(cls.RacerID.in_(racer_ids)) \
-                  .all()
+        """Get a DataFrame of RacerID, rating_Mu, rating_sigma given a list of
+        RacerID values"""
+        return pd.read_sql(cls.query \
+                              .with_entities(cls.RacerID,
+                                             cls.rating_mu,
+                                             cls.rating_sigma) \
+                              .filter(cls.RacerID.in_(racer_ids)) \
+                              .statement,
+                           db.session.bind)
+
 
     @classmethod
-    def update_ratings(cls, racers, rating_mu, rating_sigma):
-        """Update ratings given lists of RacerID values, mu, and sigma"""
-        return
-        cls.merge().where(cls.RacerID.in_(racers)).values(
-            rating_mu=rating_mu,
-            rating_sigma=rating_sigma
+    def update_ratings(cls, df):
+        """Update ratings given DataFrame with RacerID, rating_mu, and
+        rating_sigma"""
+        cols = ['RacerID', 'rating_mu', 'rating_sigma']
+        db.session.bulk_update_mappings(
+            cls,
+            df[cols].to_dict('records')  # list with dict for each row
         )
-        db.session.commit()
 
 
 class Results(db.Model):
@@ -120,7 +124,6 @@ class Results(db.Model):
                 'TeamName', 'RaceName', 'RaceCategoryName', 'race_id']
         df[cols].to_sql('results', db.engine, if_exists='append',
                 index=False, method='multi')
-
 
 
 def add_sample_rows():

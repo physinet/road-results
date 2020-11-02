@@ -130,7 +130,7 @@ def create_map():
 
 @app.route('/database')
 def preview_database(methods=['GET', 'POST']):
-    if request.args.get('reset'):
+    if request.args.get('drop'):
         commands.db_drop_all()
         commands.db_create_all()
     if request.args.get('add'):
@@ -189,5 +189,5 @@ def add_table_results():
             continue
 
         model.Results.add_from_df(df)
-        df = get_ratings(df)
-        model.Racers.add_from_df(df)
+        df = get_ratings(df).reset_index(drop=True)  # get rid of multi-index
+        model.Racers.add_from_df(df)  # add only new racers
