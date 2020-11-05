@@ -46,6 +46,7 @@ class Racers(db.Model):
     Category = db.Column(db.Integer)
     mu = db.Column(db.Float)
     sigma = db.Column(db.Float)
+    num_races = db.Column(db.Integer)
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
@@ -59,8 +60,11 @@ class Racers(db.Model):
                              .all()
         cols = ['RacerID', 'Name', 'Age', 'Category', 'mu', 'sigma']
         rows = ~df['RacerID'].isin(map(lambda x: x[0], existing_racers))
-        df[rows][cols].to_sql('racers', db.engine, if_exists='append',
-                index=False, method='multi')
+
+        # update Racers table with new racers, who have now raced 1 time
+        df[rows][cols].assign(num_races = 1) \
+                      .to_sql('racers', db.engine, if_exists='append',
+                        index=False, method='multi')
 
 
     @classmethod
@@ -80,7 +84,8 @@ class Racers(db.Model):
         return pd.read_sql(cls.query \
                               .with_entities(cls.RacerID,
                                              cls.mu,
-                                             cls.sigma) \
+                                             cls.sigma,
+                                             cls.num_races) \
                               .filter(cls.RacerID.in_(racer_ids)) \
                               .statement,
                            db.session.bind)
@@ -88,15 +93,17 @@ class Racers(db.Model):
 
     @classmethod
     def update_ratings(cls, df, existing_ratings):
-        """Update ratings given DataFrame with RacerID, mu, and sigma"""
+        """Update ratings given df with RacerID, mu, sigma, and num_races"""
+        cols = ['RacerID', 'mu', 'sigma', 'num_races']
         df_for_update = df[df['RacerID'].isin(existing_ratings['RacerID'])]
+
         if not df_for_update.empty:
-            cols = ['RacerID', 'mu', 'sigma']
             db.session.bulk_update_mappings(
                 cls,
                 df_for_update[cols].to_dict('records')  # list with dict for each row
             )
-
+            db.session.flush()
+            db.session.commit()
 
 class Results(db.Model):
     index = db.Column(db.Integer, primary_key=True)

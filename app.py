@@ -176,7 +176,7 @@ def add_table_results():
     print('Building database!')
     for f in files:
         index = int(os.path.split(f)[-1].split('.')[0])  # extract index
-        if index < 10000 or index > 10100:
+        if index < 10000 or index > 10010:
             continue
         print(index)
         json = dill.load(open(f, 'rb'))

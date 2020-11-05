@@ -33,8 +33,9 @@ def _get_ratings(df, existing_ratings):
            .fillna(default_ratings) \
            .rename(columns={'mu': 'prior_mu',
                             'sigma': 'prior_sigma'})
+    df['num_races'] += 1  # each racer has raced once more
 
-    # Calculate new ratings
+    # Calculate new ratings and add new mu and sigma columns
     df = run_trueskill(df)
 
     return df
