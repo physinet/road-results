@@ -10,7 +10,8 @@ import pandas as pd
 
 import commands
 import database
-from model import Results, Races, Racers, add_table_results
+import model
+from model import Results, Races, Racers
 
 from ratings import get_ratings
 from preprocess import clean
@@ -135,12 +136,14 @@ def preview_database(methods=['GET', 'POST']):
         commands.db_drop_all()
         commands.db_create_all()
     if request.args.get('add'):
-        add_table_results()
+        model.add_table_results()
+    if request.args.get('rate'):
+        model.get_all_ratings()
     if request.args.get('table'):
         Table = eval(request.args.get('table'))
     else:
         Table = Results
-    queries = Table.query.limit(1000).all()
+    queries = Table.query.order_by(Table.index).limit(1000).all()
 
     cols = Table.__table__.columns.keys()
 

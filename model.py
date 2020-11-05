@@ -99,10 +99,9 @@ class Racers(db.Model):
         df_for_update = df[df['RacerID'].isin(existing_ratings['RacerID'])]
 
         if not df_for_update.empty:
-            db.session.bulk_update_mappings(
-                cls,
-                df_for_update[cols].to_dict('records')  # list with dict for each row
-            )
+            # updated_results is a list of dicts for each row
+            updated_results = df_for_update[cols].to_dict('records')
+            db.session.bulk_update_mappings(cls, updated_results)
             db.session.flush()
             db.session.commit()
 
@@ -166,7 +165,13 @@ def add_table_results():
 
 def get_all_ratings():
     """Get all ratings from using results in the Results table"""
-    Results.group_by(Results.race_id)
+    updated_results = [Results(index=3, mu=10, sigma=20),
+                       Results(index=4, mu=20, sigma=30)]
+    db.session.bulk_update_mappings(Results,
+                                    map(lambda x: x.__dict__, updated_results))
+    db.session.flush()
+    db.session.commit()
+        # Results.query.group_by(Results.race_id).update(dict(mu=10))
         #
         # # Get existing ratings from racers table
         # # This df has columns RacerID, mu, sigma
