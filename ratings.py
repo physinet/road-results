@@ -2,7 +2,6 @@ import trueskill as ts
 import pandas as pd
 
 from database import db
-from model import Racers, Results
 
 env = ts.TrueSkill(backend='scipy', draw_probability=0)
 default_ratings = {'mu': env.mu, 'sigma': env.sigma}
@@ -25,13 +24,9 @@ def run_trueskill(df):
 
     return df.assign(mu=new_mu, sigma=new_sigma)
 
-def _get_ratings(df):
+
+def _get_ratings(df, existing_ratings):
     """Get ratings for a DataFrame of racers ordered by placing"""
-
-    # Get existing ratings from racers table
-    # This df has columns RacerID, mu, sigma
-    existing_ratings = Racers.get_ratings(df['RacerID'])
-
     # merge into the results dataframe on RacerID
     # fill missing values with default ratings
     df = df.merge(existing_ratings, on=['RacerID'], how='left') \
@@ -42,18 +37,14 @@ def _get_ratings(df):
     # Calculate new ratings
     df = run_trueskill(df)
 
-    # Update racers table with new ratings
-    df_for_update = df[df['RacerID'].isin(existing_ratings['RacerID'])]
-    if not df_for_update.empty:
-        Racers.update_ratings(df_for_update)
-
     return df
 
 
-def get_ratings(df):
+def get_ratings(df, existing_ratings):
     """Get ratings for a race dataframe. Results will be grouped by category."""
     if df['RaceCategoryName'].nunique() == 1:  # If only one group, apply to whole df
-        return _get_ratings(df)
+        return _get_ratings(df, existing_ratings)
     else:  # There is a confusing issue here if there is only one group
-        df = df.groupby('RaceCategoryName').apply(_get_ratings)
-        return df
+        return df.groupby('RaceCategoryName') \
+                 .apply(lambda x: _get_ratings(x, existing_ratings)) \
+                 .reset_index(drop=True)  # get rid of multi-index

@@ -188,6 +188,11 @@ def add_table_results():
         if df.empty:
             continue
 
-        df = get_ratings(df).reset_index(drop=True)  # get rid of multi-index
+        # Get existing ratings from racers table
+        # This df has columns RacerID, mu, sigma
+        existing_ratings = model.Racers.get_ratings(df['RacerID'])
+
+        df = get_ratings(df, existing_ratings)
         model.Results.add_from_df(df)
+        model.Racers.update_ratings(df, existing_ratings)
         model.Racers.add_from_df(df)  # add only new racers

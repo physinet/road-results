@@ -66,7 +66,7 @@ class Racers(db.Model):
     @classmethod
     def add_from_df(cls, df):
         """Add to the racers table from a results DataFrame. Add by group to
-           avoid primary keys"""
+           avoid duplicate primary keys"""
         if df['RaceCategoryName'].nunique() == 1:  # If only one group, apply to whole df
             return cls._add_from_df(df)
         else:  # There is a confusing issue here if there is only one group
@@ -87,13 +87,15 @@ class Racers(db.Model):
 
 
     @classmethod
-    def update_ratings(cls, df):
+    def update_ratings(cls, df, existing_ratings):
         """Update ratings given DataFrame with RacerID, mu, and sigma"""
-        cols = ['RacerID', 'mu', 'sigma']
-        db.session.bulk_update_mappings(
-            cls,
-            df[cols].to_dict('records')  # list with dict for each row
-        )
+        df_for_update = df[df['RacerID'].isin(existing_ratings['RacerID'])]
+        if not df_for_update.empty:
+            cols = ['RacerID', 'mu', 'sigma']
+            db.session.bulk_update_mappings(
+                cls,
+                df_for_update[cols].to_dict('records')  # list with dict for each row
+            )
 
 
 class Results(db.Model):
