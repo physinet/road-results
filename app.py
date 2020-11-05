@@ -188,6 +188,6 @@ def add_table_results():
         if df.empty:
             continue
 
-        model.Results.add_from_df(df)
         df = get_ratings(df).reset_index(drop=True)  # get rid of multi-index
+        model.Results.add_from_df(df)
         model.Racers.add_from_df(df)  # add only new racers
