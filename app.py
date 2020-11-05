@@ -10,7 +10,8 @@ import pandas as pd
 
 import commands
 import database
-import model
+from model import Results, Races, Racers, add_table_results
+
 from ratings import get_ratings
 from preprocess import clean
 
@@ -134,17 +135,14 @@ def preview_database(methods=['GET', 'POST']):
         commands.db_drop_all()
         commands.db_create_all()
     if request.args.get('add'):
-        # for i in range(3000):
-        # model.add_sample_rows()
-        # model.add_table_races()
         add_table_results()
     if request.args.get('table'):
-        table = request.args.get('table')
+        Table = eval(request.args.get('table'))
     else:
-        table = 'Results'
-    queries = getattr(model, table).query.limit(1000).all()
+        Table = Results
+    queries = Table.query.limit(1000).all()
 
-    cols = getattr(model, table).__table__.columns.keys()
+    cols = Table.__table__.columns.keys()
 
     return render_template('database.html', cols=cols,
                            data=[q.__dict__ for q in queries])
@@ -168,31 +166,3 @@ def add_header(r):
     r.headers["Expires"] = "0"
     r.headers['Cache-Control'] = 'public, max-age=0'
     return r
-
-def add_table_results():
-    files = glob.iglob(os.path.join(
-        'C:\\', 'data', 'results', 'races', '*.pkd'))
-
-    print('Building database!')
-    for f in files:
-        index = int(os.path.split(f)[-1].split('.')[0])  # extract index
-        if index < 10000 or index > 10010:
-            continue
-        print(index)
-        json = dill.load(open(f, 'rb'))
-
-        df = pd.read_json(json)
-        if df.empty:
-            continue
-        df = clean(df).assign(race_id=index)
-        if df.empty:
-            continue
-
-        # Get existing ratings from racers table
-        # This df has columns RacerID, mu, sigma
-        existing_ratings = model.Racers.get_ratings(df['RacerID'])
-
-        df = get_ratings(df, existing_ratings)
-        model.Results.add_from_df(df)
-        model.Racers.update_ratings(df, existing_ratings)
-        model.Racers.add_from_df(df)  # add only new racers

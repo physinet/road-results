@@ -6,6 +6,7 @@ import pandas as pd
 from sqlalchemy import update
 
 from database import db
+from preprocess import clean
 
 
 
@@ -129,8 +130,7 @@ class Results(db.Model):
     def add_from_df(cls, df):
         """Add to the results table from a DataFrame"""
         cols = ['Place', 'Name', 'Age', 'Category', 'RacerID', 'TeamID',
-                'TeamName', 'RaceName', 'RaceCategoryName', 'race_id',
-                'prior_mu', 'prior_sigma', 'mu', 'sigma']
+                'TeamName', 'RaceName', 'RaceCategoryName', 'race_id']
         df[cols].to_sql('results', db.engine, if_exists='append',
                 index=False, method='multi')
 
@@ -141,3 +141,38 @@ def add_sample_rows():
         row = Races(lat=lat, lng=lng)
         db.session.add(row)
         db.session.commit()
+
+def add_table_results():
+    files = glob.iglob(os.path.join(
+        'C:\\', 'data', 'results', 'races', '*.pkd'))
+
+    print('Building database!')
+    for f in files:
+        index = int(os.path.split(f)[-1].split('.')[0])  # extract index
+        if index < 10000 or index > 10010:
+            continue
+        print(index)
+        json = dill.load(open(f, 'rb'))
+
+        df = pd.read_json(json)
+        if df.empty:
+            continue
+        df = clean(df).assign(race_id=index)
+        if df.empty:
+            continue
+
+        # Add results directly from file without updating ratings
+        Results.add_from_df(df)
+
+def get_all_ratings():
+    """Get all ratings from using results in the Results table"""
+    Results.group_by(Results.race_id)
+        #
+        # # Get existing ratings from racers table
+        # # This df has columns RacerID, mu, sigma
+        # existing_ratings = model.Racers.get_ratings(df['RacerID'])
+        #
+        #
+        # df = get_ratings(df, existing_ratings)
+        # model.Racers.update_ratings(df, existing_ratings)
+        # model.Racers.add_from_df(df)  # add only new racers
