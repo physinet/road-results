@@ -44,11 +44,11 @@ class Racers(db.Model):
     Name = db.Column(db.String)
     Age = db.Column(db.String)
     Category = db.Column(db.Integer)
-    rating_mu = db.Column(db.Float)
-    rating_sigma = db.Column(db.Float)
+    mu = db.Column(db.Float)
+    sigma = db.Column(db.Float)
 
     def __repr__(self):
-        return f"Racer: {self.RacerID, self.Name, self.rating_mu, self.rating_sigma}"
+        return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
 
     @classmethod
     def _add_from_df(cls, df):
@@ -57,7 +57,7 @@ class Racers(db.Model):
                              .with_entities(cls.RacerID) \
                              .filter(cls.RacerID.in_(df['RacerID'])) \
                              .all()
-        cols = ['RacerID', 'Name', 'Age', 'Category', 'rating_mu', 'rating_sigma']
+        cols = ['RacerID', 'Name', 'Age', 'Category', 'mu', 'sigma']
         rows = ~df['RacerID'].isin(map(lambda x: x[0], existing_racers))
         df[rows][cols].to_sql('racers', db.engine, if_exists='append',
                 index=False, method='multi')
@@ -75,12 +75,12 @@ class Racers(db.Model):
 
     @classmethod
     def get_ratings(cls, racer_ids):
-        """Get a DataFrame of RacerID, rating_Mu, rating_sigma given a list of
+        """Get a DataFrame of RacerID, mu, sigma given a list of
         RacerID values"""
         return pd.read_sql(cls.query \
                               .with_entities(cls.RacerID,
-                                             cls.rating_mu,
-                                             cls.rating_sigma) \
+                                             cls.mu,
+                                             cls.sigma) \
                               .filter(cls.RacerID.in_(racer_ids)) \
                               .statement,
                            db.session.bind)
@@ -88,9 +88,8 @@ class Racers(db.Model):
 
     @classmethod
     def update_ratings(cls, df):
-        """Update ratings given DataFrame with RacerID, rating_mu, and
-        rating_sigma"""
-        cols = ['RacerID', 'rating_mu', 'rating_sigma']
+        """Update ratings given DataFrame with RacerID, mu, and sigma"""
+        cols = ['RacerID', 'mu', 'sigma']
         db.session.bulk_update_mappings(
             cls,
             df[cols].to_dict('records')  # list with dict for each row
@@ -109,10 +108,10 @@ class Results(db.Model):
     RaceName = db.Column(db.String)
     RaceCategoryName = db.Column(db.String)
     race_id = db.Column(db.Integer)
-    prior_rating_mu = db.Column(db.Float)
-    prior_rating_sigma = db.Column(db.Float)
-    rating_mu = db.Column(db.Float)
-    rating_sigma = db.Column(db.Float)
+    prior_mu = db.Column(db.Float)
+    priorsigma = db.Column(db.Float)
+    mu = db.Column(db.Float)
+    sigma = db.Column(db.Float)
 
     def __repr__(self):
         return f"Result: {self.index, self.RaceName, self.Name}"
