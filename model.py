@@ -109,7 +109,7 @@ class Results(db.Model):
     RaceCategoryName = db.Column(db.String)
     race_id = db.Column(db.Integer)
     prior_mu = db.Column(db.Float)
-    priorsigma = db.Column(db.Float)
+    prior_sigma = db.Column(db.Float)
     mu = db.Column(db.Float)
     sigma = db.Column(db.Float)
 
@@ -120,7 +120,8 @@ class Results(db.Model):
     def add_from_df(cls, df):
         """Add to the results table from a DataFrame"""
         cols = ['Place', 'Name', 'Age', 'Category', 'RacerID', 'TeamID',
-                'TeamName', 'RaceName', 'RaceCategoryName', 'race_id']
+                'TeamName', 'RaceName', 'RaceCategoryName', 'race_id',
+                'prior_mu', 'prior_sigma', 'mu', 'sigma']
         df[cols].to_sql('results', db.engine, if_exists='append',
                 index=False, method='multi')
 

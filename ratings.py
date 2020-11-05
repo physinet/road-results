@@ -1,4 +1,5 @@
 import trueskill as ts
+import pandas as pd
 
 from database import db
 from model import Racers, Results
@@ -11,9 +12,18 @@ def run_trueskill(df):
     prior_sigma and updates ratings in columns _mu, sigma"""
     prior_mu, prior_sigma = df['prior_mu'], df['prior_sigma']
 
-    df = df.assign(mu=prior_mu + 1,
-                   sigma=prior_sigma + 1)
-    return df
+    if len(df) <= 1:  # Uncontested race
+        return df.assign(mu=prior_mu, sigma=prior_sigma)
+
+    # TrueSkill requires each "team" as a list. Our teams are one person each
+    # and consist of one rating. We then need to get the only element from the
+    # returned list to access the updated ratings
+    new_ratings = ts.rate([[ts.Rating(mu, sigma)]
+                           for mu, sigma in zip(prior_mu, prior_sigma)])
+    new_mu, new_sigma = map(pd.Series, zip(*[(r[0].mu, r[0].sigma)
+                                                for r in new_ratings]))
+
+    return df.assign(mu=new_mu, sigma=new_sigma)
 
 def _get_ratings(df):
     """Get ratings for a DataFrame of racers ordered by placing"""
