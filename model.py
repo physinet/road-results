@@ -71,7 +71,6 @@ class Racers(db.Model):
                       .to_sql('racers', db.engine, if_exists='append',
                         index=False, method='multi')
 
-
     @classmethod
     def add_from_df(cls, df):
         """Add to the racers table from a results DataFrame. Add by group to
@@ -81,19 +80,22 @@ class Racers(db.Model):
         else:  # There is a confusing issue here if there is only one group
             return df.groupby(['RaceCategoryName']).apply(cls._add_from_df)
 
+    @classmethod
+    def add_sample(cls):
+        for i in range(10):
+            row = cls(Name='Test', Age=i, Category=4, mu=3, sigma=4)
+            db.session.add(row)
+            db.session.commit()
+
 
     @classmethod
     def get_ratings(cls, racer_ids):
-        """Get a DataFrame of RacerID, mu, sigma given a list of
+        """Get a list of (RacerID, mu, sigma, num_races) tuples given a list of
         RacerID values"""
-        return pd.read_sql(cls.query \
-                              .with_entities(cls.RacerID,
-                                             cls.mu,
-                                             cls.sigma,
-                                             cls.num_races) \
-                              .filter(cls.RacerID.in_(racer_ids)) \
-                              .statement,
-                           db.session.bind)
+        return (cls.query
+                   .with_entities(cls.RacerID, cls.mu, cls.sigma, cls.num_races)
+                   .filter(cls.RacerID.in_(racer_ids))
+                   .all())
 
 
     @classmethod
@@ -176,8 +178,18 @@ def get_all_ratings():
                                                .label('racer_id')) \
                             .group_by(Results.race_id,
                                       Results.RaceCategoryName) \
+                            .order_by(Results.race_id,
+                                      Results.RaceCategoryName)
 
-    print(places.all())
+    for race_id, _, racer_id_list in places:
+        print(race_id, racer_id_list)
+        existing_ratings = Racers.get_ratings(racer_id_list)
+        print(existing_ratings)
+    # summed = db.session.query(places) \
+    #                    .with_entities(func.sum(places.c.racer_id)) \
+    #                    .all()
+    # print(summed)
+    # print(db.session.query(places).with_entities(places.c.racer_id).all())
 
     ## Figuring out how to apply a function to list of racerids
 
