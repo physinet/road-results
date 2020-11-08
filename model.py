@@ -4,6 +4,8 @@ import os
 import pandas as pd
 
 from sqlalchemy import update
+from sqlalchemy import func
+from sqlalchemy.orm import synonym
 
 from database import db
 from preprocess import clean
@@ -12,6 +14,7 @@ from preprocess import clean
 
 class Races(db.Model):
     race_id = db.Column(db.Integer, primary_key=True)
+    index = synonym('race_id')
     name = db.Column(db.String)
     date = db.Column(db.DateTime)
     loc = db.Column(db.String)
@@ -42,6 +45,7 @@ class Races(db.Model):
 
 class Racers(db.Model):
     RacerID = db.Column(db.Integer, primary_key=True)
+    index = synonym('RacerID')
     Name = db.Column(db.String)
     Age = db.Column(db.String)
     Category = db.Column(db.Integer)
@@ -165,12 +169,32 @@ def add_table_results():
 
 def get_all_ratings():
     """Get all ratings from using results in the Results table"""
-    updated_results = [Results(index=3, mu=10, sigma=20),
-                       Results(index=4, mu=20, sigma=30)]
-    db.session.bulk_update_mappings(Results,
-                                    map(lambda x: x.__dict__, updated_results))
-    db.session.flush()
-    db.session.commit()
+    results_to_rate = Results.query.filter(Results.Place != None)  # drop DNFs
+    places = results_to_rate.with_entities(Results.race_id,
+                                           Results.RaceCategoryName,
+                                           func.array_agg(Results.RacerID)
+                                               .label('racer_id')) \
+                            .group_by(Results.race_id,
+                                      Results.RaceCategoryName) \
+
+    print(places.all())
+
+    ## Figuring out how to apply a function to list of racerids
+
+    # print(places.with_entities(places.racer_id).all())
+    # print(places.all())
+    # print(Results.query.with_entities(func.unnest('places')) \
+    #              .join(places, places.race_id == Results.race_id).all())
+
+    #
+    # updated_results = [Results(index=3, mu=10, sigma=20),
+    #                    Results(index=4, mu=20, sigma=30)]
+    # db.session.bulk_update_mappings(Results,
+    #                                 map(lambda x: x.__dict__, updated_results))
+    # db.session.flush()
+    # db.session.commit()
+
+
         # Results.query.group_by(Results.race_id).update(dict(mu=10))
         #
         # # Get existing ratings from racers table
