@@ -13,7 +13,6 @@ import database
 import model
 from model import Results, Races, Racers
 
-from ratings import get_ratings
 from preprocess import clean
 
 from plotting import make_racer_plot_alt
@@ -137,6 +136,8 @@ def preview_database(methods=['GET', 'POST']):
         commands.db_create_all()
     if request.args.get('add'):
         model.add_table_results()
+    if request.args.get('addsample'):
+        Racers.add_sample()
     if request.args.get('rate'):
         model.get_all_ratings()
     if request.args.get('table'):

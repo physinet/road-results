@@ -2,14 +2,16 @@ import dill
 import glob
 import os
 import pandas as pd
+from collections import defaultdict
 
 from sqlalchemy import update
 from sqlalchemy import func
 from sqlalchemy.orm import synonym
 
 from database import db
-from preprocess import clean
 
+from preprocess import clean
+import ratings
 
 
 class Races(db.Model):
@@ -82,8 +84,8 @@ class Racers(db.Model):
 
     @classmethod
     def add_sample(cls):
-        for i in range(10):
-            row = cls(Name='Test', Age=i, Category=4, mu=3, sigma=4)
+        for i in [161489, 118930, 149080, 108331]:
+            row = cls(RacerID=i, Name='Test', mu=3, sigma=4, num_races=5)
             db.session.add(row)
             db.session.commit()
 
@@ -92,10 +94,12 @@ class Racers(db.Model):
     def get_ratings(cls, racer_ids):
         """Get a list of (RacerID, mu, sigma, num_races) tuples given a list of
         RacerID values"""
-        return (cls.query
-                   .with_entities(cls.RacerID, cls.mu, cls.sigma, cls.num_races)
-                   .filter(cls.RacerID.in_(racer_ids))
-                   .all())
+        existing_ratings = (cls.query
+                               .with_entities(cls.RacerID, cls.mu, cls.sigma, cls.num_races)
+                               .filter(cls.RacerID.in_(racer_ids))
+                               .all())
+        return defaultdict(lambda: ratings.default(),
+                           {r[0]: r[1:] for r in existing_ratings})
 
 
     @classmethod
@@ -180,23 +184,21 @@ def get_all_ratings():
                                       Results.RaceCategoryName) \
                             .order_by(Results.race_id,
                                       Results.RaceCategoryName)
+                                      # TODO: order by date
 
     for race_id, _, racer_id_list in places:
         print(race_id, racer_id_list)
+        # Get ratings for racers who have already raced
         existing_ratings = Racers.get_ratings(racer_id_list)
-        print(existing_ratings)
-    # summed = db.session.query(places) \
-    #                    .with_entities(func.sum(places.c.racer_id)) \
-    #                    .all()
-    # print(summed)
-    # print(db.session.query(places).with_entities(places.c.racer_id).all())
+        # existing_ratings is a defaultdict keyed by racer id
+        # if racer id not in the default dict, will provide initial rating
+        rating_list = [(racer_id, *existing_ratings[racer_id])
+                        for racer_id in racer_id_list]
+        print(existing_ratings, rating_list)
 
-    ## Figuring out how to apply a function to list of racerids
-
-    # print(places.with_entities(places.racer_id).all())
-    # print(places.all())
-    # print(Results.query.with_entities(func.unnest('places')) \
-    #              .join(places, places.race_id == Results.race_id).all())
+        # Update ratings using TrueSkill
+        new_rating_list = ratings.run_trueskill(rating_list)
+        print(new_rating_list)
 
     #
     # updated_results = [Results(index=3, mu=10, sigma=20),
@@ -207,13 +209,6 @@ def get_all_ratings():
     # db.session.commit()
 
 
-        # Results.query.group_by(Results.race_id).update(dict(mu=10))
-        #
-        # # Get existing ratings from racers table
-        # # This df has columns RacerID, mu, sigma
-        # existing_ratings = model.Racers.get_ratings(df['RacerID'])
-        #
-        #
         # df = get_ratings(df, existing_ratings)
         # model.Racers.update_ratings(df, existing_ratings)
         # model.Racers.add_from_df(df)  # add only new racers
