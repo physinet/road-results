@@ -51,9 +51,9 @@ class Racers(db.Model):
     Name = db.Column(db.String)
     Age = db.Column(db.String)
     Category = db.Column(db.Integer)
-    mu = db.Column(db.Float)
-    sigma = db.Column(db.Float)
-    num_races = db.Column(db.Integer)
+    mu = db.Column(db.Float, default=ratings.default_ratings['mu'])
+    sigma = db.Column(db.Float, default=ratings.default_ratings['sigma'])
+    num_races = db.Column(db.Integer, default=1)
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
@@ -81,6 +81,26 @@ class Racers(db.Model):
             return cls._add_from_df(df)
         else:  # There is a confusing issue here if there is only one group
             return df.groupby(['RaceCategoryName']).apply(cls._add_from_df)
+
+
+    @classmethod
+    def add_new_racers(cls, results):
+        """Given a query consisting of rows from the Results table, adds
+           racers to the Racers table that do not already exist in Racers"""
+        new_racers = results.join(Racers,
+                                  Results.RacerID == Racers.RacerID,
+                                  isouter=True) \
+                            .filter(Racers.RacerID == None) \
+                            .all()
+        for new_racer in new_racers:
+            racer = Racers(RacerID=new_racer.RacerID,
+                           Name=new_racer.Name,
+                           Age=new_racer.Age,
+                           Category=new_racer.Category,
+                           mu=ratings.default_ratings['mu'],
+                           sigma=ratings.default_ratings['sigma'],
+                           num_races=1)
+            db.session.merge(racer)
 
     @classmethod
     def add_sample(cls):
@@ -133,7 +153,7 @@ class Results(db.Model):
     sigma = db.Column(db.Float)
 
     def __repr__(self):
-        return f"Result: {self.index, self.RaceName, self.Name}"
+        return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"
 
     @classmethod
     def add_from_df(cls, df):
@@ -186,19 +206,46 @@ def get_all_ratings():
                                       Results.RaceCategoryName)
                                       # TODO: order by date
 
-    for race_id, _, racer_id_list in places:
-        print(race_id, racer_id_list)
-        # Get ratings for racers who have already raced
-        existing_ratings = Racers.get_ratings(racer_id_list)
-        # existing_ratings is a defaultdict keyed by racer id
-        # if racer id not in the default dict, will provide initial rating
-        rating_list = [(racer_id, *existing_ratings[racer_id])
-                        for racer_id in racer_id_list]
-        print(existing_ratings, rating_list)
 
-        # Update ratings using TrueSkill
-        new_rating_list = ratings.run_trueskill(rating_list)
-        print(new_rating_list)
+
+    for race_id, category, racer_id_list in places:
+        # Get a table with the relevant results we want to rate
+        results = Results.query.filter(Results.race_id == race_id) \
+                               .filter(Results.RaceCategoryName == category) \
+                               .filter(Results.RacerID.in_(racer_id_list)) \
+
+        # Update Racers table with new racers (and give them default ratings)
+        Racers.add_new_racers(results)
+
+        #
+
+
+        #
+        # joined = results.join(Racers,
+        #                       Results.RacerID == Racers.RacerID,
+        #                       isouter=True) \
+        #                 .with_entities(Results.RacerID, Racers.mu)
+        # print(joined.all())
+
+
+
+
+        #
+        # print(race_id, racer_id_list)
+        # # Get ratings for racers who have already raced
+        # existing_ratings = Racers.get_ratings(racer_id_list)
+        # # existing_ratings is a defaultdict keyed by racer id
+        # # if racer id not in the default dict, will provide initial rating
+        # rating_list = [(racer_id, *existing_ratings[racer_id])
+        #                 for racer_id in racer_id_list]
+        # print(existing_ratings, rating_list)
+        #
+        # # Update ratings using TrueSkill
+        # new_rating_list = ratings.run_trueskill(rating_list)
+        # print(new_rating_list)
+
+        # Write updated ratings to Racer table (adding new racers if necessary)
+
 
     #
     # updated_results = [Results(index=3, mu=10, sigma=20),
