@@ -4,8 +4,7 @@ import os
 import pandas as pd
 from collections import defaultdict
 
-from sqlalchemy import update
-from sqlalchemy import func
+from sqlalchemy import update, func
 from sqlalchemy.orm import synonym
 
 from database import db
