@@ -7,10 +7,6 @@ from database import db
 env = ts.TrueSkill(backend='mpmath', draw_probability=0)
 default_ratings = {'mu': env.mu, 'sigma': env.sigma, 'num_races': 1}
 
-def default():
-    """Returns a default rating as a tuple"""
-    return (env.mu, env.sigma, 1)
-
 def run_trueskill(results):
     """Runs TrueSkill on the race results, where prior ratings are stored
        in prior_mu and prior_sigma attributes for each row in the results.

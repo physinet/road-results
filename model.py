@@ -2,7 +2,6 @@ import dill
 import glob
 import os
 import pandas as pd
-from collections import defaultdict
 
 from sqlalchemy import update, func
 from sqlalchemy.orm import synonym
@@ -48,9 +47,9 @@ class Racers(db.Model):
     Name = db.Column(db.String)
     Age = db.Column(db.String)
     Category = db.Column(db.Integer)
-    mu = db.Column(db.Float, default=ratings.default_ratings['mu'])
-    sigma = db.Column(db.Float, default=ratings.default_ratings['sigma'])
-    num_races = db.Column(db.Integer, default=1)
+    mu = db.Column(db.Float)
+    sigma = db.Column(db.Float)
+    num_races = db.Column(db.Integer)
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
@@ -70,18 +69,10 @@ class Racers(db.Model):
                            Name=new_racer.Name,
                            Age=new_racer.Age,
                            Category=new_racer.Category,
-                           mu=ratings.default_ratings['mu'],
-                           sigma=ratings.default_ratings['sigma'],
+                           mu=ratings.env.mu,
+                           sigma=ratings.env.sigma,
                            num_races=1)
             db.session.merge(racer)
-
-
-    @classmethod
-    def add_sample(cls):
-        for i in [161489, 118930, 149080, 108331]:
-            row = cls(RacerID=i, Name='Test', mu=3, sigma=4, num_races=5)
-            db.session.add(row)
-            db.session.commit()
 
 
     @classmethod
@@ -123,13 +114,6 @@ class Results(db.Model):
                 index=False, method='multi')
 
 
-def add_sample_rows():
-    """Add some sample rows to the database"""
-    for lat, lng in zip([53, 15, 62], [1, 2, 3]):
-        row = Races(lat=lat, lng=lng)
-        db.session.add(row)
-        db.session.commit()
-
 def add_table_results():
     files = glob.iglob(os.path.join(
         'C:\\', 'data', 'results', 'races', '*.pkd'))
@@ -137,7 +121,7 @@ def add_table_results():
     print('Building database!')
     for f in files:
         index = int(os.path.split(f)[-1].split('.')[0])  # extract index
-        if index < 10000 or index > 10010:
+        if index < 10000 or index > 10011:
             continue
         print(index)
         json = dill.load(open(f, 'rb'))
@@ -152,22 +136,25 @@ def add_table_results():
         # Add results directly from file without updating ratings
         Results.add_from_df(df)
 
+
 def get_all_ratings():
     """Get all ratings from using results in the Results table"""
     results_to_rate = Results.query.filter(Results.Place != None)  # drop DNFs
-    places = results_to_rate.with_entities(Results.race_id,
+    places = results_to_rate.join(Races, Races.race_id == Results.race_id) \
+                            .with_entities(Results.race_id,
                                            Results.RaceCategoryName,
+                                           Races.date,
                                            func.array_agg(Results.RacerID)
                                                .label('racer_id')) \
                             .group_by(Results.race_id,
-                                      Results.RaceCategoryName) \
-                            .order_by(Results.race_id,
-                                      Results.RaceCategoryName)
-                                      # TODO: order by date
+                                      Results.RaceCategoryName,
+                                      Races.date) \
+                            .order_by(Races.date) \
 
 
 
-    for race_id, category, racer_id_list in places:
+    for race_id, category, date, racer_id_list in places:
+        print(f'Rating race {race_id} category {category} date {date}')
         # Get a table with the relevant results we want to rate
         results = Results.query.filter(Results.race_id == race_id) \
                                .filter(Results.RaceCategoryName == category) \

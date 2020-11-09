@@ -142,9 +142,6 @@ def preview_database(methods=['GET', 'POST']):
         df = pd.read_pickle('C:/data/results/df.pkl')
         model.Races.add_from_df(df)
 
-    if request.args.get('addsample'):
-        Racers.add_sample()
-
     if request.args.get('rate'):
         model.get_all_ratings()
 
@@ -152,18 +149,12 @@ def preview_database(methods=['GET', 'POST']):
         Table = eval(request.args.get('table'))
     else:
         Table = Results
-    queries = Table.query.order_by(Table.index).limit(1000).all()
+    queries = Table.query.order_by(Table.index).limit(2000).all()
 
     cols = Table.__table__.columns.keys()
 
     return render_template('database.html', cols=cols,
                            data=[q.__dict__ for q in queries])
-
-    # queries = model.Races.query.limit(50).all()
-    #
-    # cols = model.Races.__table__.columns.keys()
-    # return render_template('database.html', cols=cols,
-    #                        data=[q.__dict__ for q in queries])
 
 
 @app.after_request
