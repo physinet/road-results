@@ -123,17 +123,13 @@ class Racers(db.Model):
 
 
     @classmethod
-    def update_ratings(cls, df, existing_ratings):
-        """Update ratings given df with RacerID, mu, sigma, and num_races"""
-        cols = ['RacerID', 'mu', 'sigma', 'num_races']
-        df_for_update = df[df['RacerID'].isin(existing_ratings['RacerID'])]
-
-        if not df_for_update.empty:
-            # updated_results is a list of dicts for each row
-            updated_results = df_for_update[cols].to_dict('records')
-            db.session.bulk_update_mappings(cls, updated_results)
-            db.session.flush()
-            db.session.commit()
+    def update_ratings(cls, results):
+        """Update Racers table from list of rows from Results table."""
+        mappings = [{'RacerID': r.RacerID, 'mu': r.new_mu, 'sigma': r.new_sigma}
+                    for r in results]
+        db.session.bulk_update_mappings(cls, mappings)
+        db.session.flush()
+        db.session.commit()
 
 class Results(db.Model):
     index = db.Column(db.Integer, primary_key=True)
@@ -149,8 +145,8 @@ class Results(db.Model):
     race_id = db.Column(db.Integer)
     prior_mu = db.Column(db.Float)
     prior_sigma = db.Column(db.Float)
-    mu = db.Column(db.Float)
-    sigma = db.Column(db.Float)
+    new_mu = db.Column(db.Float)
+    new_sigma = db.Column(db.Float)
 
     def __repr__(self):
         return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"
@@ -212,50 +208,32 @@ def get_all_ratings():
         # Get a table with the relevant results we want to rate
         results = Results.query.filter(Results.race_id == race_id) \
                                .filter(Results.RaceCategoryName == category) \
-                               .filter(Results.RacerID.in_(racer_id_list)) \
+                               .filter(Results.RacerID.in_(racer_id_list))
 
         # Update Racers table with new racers (and give them default ratings)
         Racers.add_new_racers(results)
 
-        #
+        # Join the Results and Racers tables to get prior ratings
+        results_cte = results.cte()  # WITH ... AS ...
+        results_racers = \
+            db.session \
+              .query(results_cte, Racers.mu, Racers.sigma) \
+              .join(Racers, results_cte.c.RacerID == Racers.RacerID) \
+              .all()
 
+        results = results.all()
+        assert len(results_racers) == len(results), \
+               'Some racers missing from either Results or Racers table!'
 
-        #
-        # joined = results.join(Racers,
-        #                       Results.RacerID == Racers.RacerID,
-        #                       isouter=True) \
-        #                 .with_entities(Results.RacerID, Racers.mu)
-        # print(joined.all())
+        # Store prior ratings in Results table
+        for result, result_racers in zip(results, results_racers):
+            result.prior_mu = result_racers.mu
+            result.prior_sigma = result_racers.sigma
 
+        # Feed the ratings into TrueSkill
+        new_ratings = ratings.run_trueskill(results)
+        for result, new_rating in zip(results, new_ratings):
+            result.new_mu, result.new_sigma = new_rating
 
-
-
-        #
-        # print(race_id, racer_id_list)
-        # # Get ratings for racers who have already raced
-        # existing_ratings = Racers.get_ratings(racer_id_list)
-        # # existing_ratings is a defaultdict keyed by racer id
-        # # if racer id not in the default dict, will provide initial rating
-        # rating_list = [(racer_id, *existing_ratings[racer_id])
-        #                 for racer_id in racer_id_list]
-        # print(existing_ratings, rating_list)
-        #
-        # # Update ratings using TrueSkill
-        # new_rating_list = ratings.run_trueskill(rating_list)
-        # print(new_rating_list)
-
-        # Write updated ratings to Racer table (adding new racers if necessary)
-
-
-    #
-    # updated_results = [Results(index=3, mu=10, sigma=20),
-    #                    Results(index=4, mu=20, sigma=30)]
-    # db.session.bulk_update_mappings(Results,
-    #                                 map(lambda x: x.__dict__, updated_results))
-    # db.session.flush()
-    # db.session.commit()
-
-
-        # df = get_ratings(df, existing_ratings)
-        # model.Racers.update_ratings(df, existing_ratings)
-        # model.Racers.add_from_df(df)  # add only new racers
+        # Update the racers table with the new ratings
+        Racers.update_ratings(results)
