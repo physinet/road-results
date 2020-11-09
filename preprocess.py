@@ -46,13 +46,12 @@ def check_unique_placings(df):
 
 def handle_missing(df):
     '''
-    Records DNF/DNP as nans in the 'Place' column
-    and records DQ as 0 or 1 in the 'IsDQ' column
+    Records DNF/DNP/DQ as nans in the 'Place' column
     '''
     df.loc[df['IsDnf'] == 1, 'Place'] = np.nan
     df.loc[df['IsDNP'] == 1, 'Place'] = np.nan
-    df.loc[:, 'IsDQ'] = df.loc[:, 'IsDQ'].fillna(0)
-    return df.drop(columns=['IsDnf', 'IsDNP'])
+    df.loc[df['IsDQ'] == 1, 'Place'] = np.nan
+    return df.drop(columns=['IsDnf', 'IsDNP', 'IsDQ'])
 
 
 def process_rider(df):
@@ -100,7 +99,7 @@ def sort_columns(df):
     '''
     Order and set datatypes for columns
     '''
-    df = df.astype({'Place': float, 'IsDQ': bool, 'Category': float})
+    df = df.astype({'Place': float, 'Category': float})
     df = df[['Place', 'RaceTime', 'Name', 'Age', 'Category', 'RacerID',
-             'TeamID', 'TeamName', 'RaceName', 'RaceCategoryName', 'IsDQ']]
+             'TeamID', 'TeamName', 'RaceName', 'RaceCategoryName']]
     return df
