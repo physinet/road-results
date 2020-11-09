@@ -161,7 +161,8 @@
           <h2>Find a race</h2>
           Enter <a href="https://results.bikereg.com/race/11456">BikeReg race page</a> URL:
           <form method="POST">
-            <input size="50" type="text" name="race_url" id="race_url" placeholder="https://results.bikereg.com/race/11456">
+            <!-- <input size="50" type="text" name="race_url" id="race_url" placeholder="https://results.bikereg.com/race/11456"> -->
+            <input size="50" type="text" name="race_id" id="race_id" placeholder="10000">
             <input type="submit">
           </form>
           <br>
@@ -399,7 +400,7 @@
   <script>
         var spec = {{ chart | safe }};
         vegaEmbed("#racer-plot", spec);
-   </script>
+  </script>
 </body>
 
 </html>

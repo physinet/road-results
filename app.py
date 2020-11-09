@@ -17,6 +17,10 @@ from preprocess import clean
 
 from plotting import make_racer_plot_alt
 
+# constants to keep track of which race/racer info to show on the main page
+RACE_ID = 11557
+RACER_ID = 177974
+
 rows = [
     {'a': 1, 'b': 2, 'c': 3},
     {'a': 3, 'b': 5, 'c': -6}
@@ -99,6 +103,17 @@ def index():
 
 @app.route('/', methods=['POST'])
 def index_post():
+    global RACE_ID, RACER_ID
+
+    race_id = request.form.get('race_id')
+    if race_id:
+        RACE_ID = race_id
+    RACE_ID = int(RACE_ID)
+
+    categories = Races.get_categories(RACE_ID)
+    race_table = Results.get_race_table(RACE_ID, categories[0])
+    print(race_table.all())
+
     if 'racer_url' in request.form:
         racer_url = request.form['racer_url']
     else:
@@ -138,9 +153,9 @@ def preview_database(methods=['GET', 'POST']):
     if request.args.get('add'):
         if Results.query.count() > 0:
             raise Exception('Rows exist in Results table. Can\'t add!')
-        model.add_table_results()
         df = pd.read_pickle('C:/data/results/df.pkl')
         model.Races.add_from_df(df)
+        model.add_table_results()
 
     if request.args.get('rate'):
         model.get_all_ratings()
@@ -149,13 +164,33 @@ def preview_database(methods=['GET', 'POST']):
         Table = eval(request.args.get('table'))
     else:
         Table = Results
-    queries = Table.query.order_by(Table.index).limit(2000).all()
+    queries = Table.query.order_by(Table.index)
+
+    if Table == Races:
+        queries = queries.filter(Table.index > 10000) # for troubleshooting
+
+    queries = queries.limit(2000)
 
     cols = Table.__table__.columns.keys()
 
     return render_template('database.html', cols=cols,
                            data=[q.__dict__ for q in queries])
 
+
+@app.route('/race')
+def display_single_race(methods=['GET', 'POST']):
+    race_id = request.args.get('id')
+    if not race_id:
+        race_id = 10000
+
+    race_table_dict = Results.get_race_tables(race_id)
+    from itertools import chain
+    queries = chain.from_iterable(race_table_dict.values())
+
+    cols = Results.__table__.columns.keys()
+
+    return render_template('database.html', cols=cols,
+                            data=[q.__dict__ for q in queries])
 
 @app.after_request
 def add_header(r):

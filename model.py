@@ -21,6 +21,7 @@ class Races(db.Model):
     json_url = db.Column(db.String)
     lat = db.Column(db.Float)
     lng = db.Column(db.Float)
+    categories = db.Column(db.ARRAY(db.String), default=list)
 
     def __repr__(self):
         return f"Race: {self.race_id, self.name}"
@@ -38,7 +39,25 @@ class Races(db.Model):
         df = df.apply(get_lat_lng, axis=1).reset_index()
 
         cols = ['race_id', 'name', 'date', 'loc', 'json_url', 'lat', 'lng']
-        df[cols].to_sql('races', db.engine, if_exists='replace')
+        df[cols].to_sql('races', db.engine, if_exists='append',
+                index=False, method='multi')
+
+    @classmethod
+    def add_categories(cls, race_id, categories):
+        """Add a list of categories to the table at the given race_id"""
+        # there should only be one row
+        row = cls.query.filter(cls.race_id == race_id).one()
+        row.categories = categories
+        db.session.commit()
+
+
+    @classmethod
+    def get_categories(cls, race_id):
+        """Return a list of RaceCategoryNames for the given race_id"""
+        return cls.query \
+                  .filter(cls.race_id == race_id) \
+                  .with_entities(cls.categories) \
+                  .one()[0]  # one row, one entity
 
 
 class Racers(db.Model):
@@ -113,6 +132,14 @@ class Results(db.Model):
         df[cols].to_sql('results', db.engine, if_exists='append',
                 index=False, method='multi')
 
+    @classmethod
+    def get_race_table(cls, race_id, RaceCategoryName):
+        """For given race_id and RaceCategoryName, returns a generator of
+           Results rows"""
+        return cls.query \
+                  .filter(cls.race_id == race_id,
+                          cls.RaceCategoryName == RaceCategoryName) \
+                  .order_by(cls.index)
 
 def add_table_results():
     files = glob.iglob(os.path.join(
@@ -136,6 +163,9 @@ def add_table_results():
         # Add results directly from file without updating ratings
         Results.add_from_df(df)
 
+        # Add categories to the race metadata table
+        categories = df['RaceCategoryName'].unique()
+        Races.add_categories(index, categories.tolist())
 
 def get_all_ratings():
     """Get all ratings from using results in the Results table"""
