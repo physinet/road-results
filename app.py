@@ -182,15 +182,23 @@ def display_single_race(methods=['GET', 'POST']):
     race_id = request.args.get('id')
     if not race_id:
         race_id = 10000
+    race_id = int(race_id)
 
-    race_table_dict = Results.get_race_tables(race_id)
-    from itertools import chain
-    queries = chain.from_iterable(race_table_dict.values())
+    category_idx = request.args.get('cat')  # an index for which category
+    if not category_idx:
+        category_idx = 0
+    category_idx = int(category_idx)
+
+    categories = Races.get_categories(race_id)
+    if category_idx >= len(categories):
+        category_idx = 0
+
+    race_table = Results.get_race_table(race_id, categories[category_idx])
 
     cols = Results.__table__.columns.keys()
 
     return render_template('database.html', cols=cols,
-                            data=[q.__dict__ for q in queries])
+                            data=[q.__dict__ for q in race_table])
 
 @app.after_request
 def add_header(r):
