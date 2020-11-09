@@ -134,12 +134,20 @@ def preview_database(methods=['GET', 'POST']):
     if request.args.get('drop'):
         commands.db_drop_all()
         commands.db_create_all()
+
     if request.args.get('add'):
+        if Results.query.count() > 0:
+            raise Exception('Rows exist in Results table. Can\'t add!')
         model.add_table_results()
+        df = pd.read_pickle('C:/data/results/df.pkl')
+        model.Races.add_from_df(df)
+
     if request.args.get('addsample'):
         Racers.add_sample()
+
     if request.args.get('rate'):
         model.get_all_ratings()
+
     if request.args.get('table'):
         Table = eval(request.args.get('table'))
     else:

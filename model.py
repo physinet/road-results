@@ -30,8 +30,6 @@ class Races(db.Model):
     @classmethod
     def add_from_df(cls, df):
         """Add the race metadata table from a DataFrame"""
-        raise Exception('Move df loading to external!!')
-        df = pd.read_pickle('C:/data/results/df.pkl')
 
         # Change coordinates tuple to two columns
         def get_lat_lng(x):
@@ -58,30 +56,6 @@ class Racers(db.Model):
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
 
-    @classmethod
-    def _add_from_df(cls, df):
-        """Add new racers to the racers table from a DataFrame"""
-        existing_racers = cls.query \
-                             .with_entities(cls.RacerID) \
-                             .filter(cls.RacerID.in_(df['RacerID'])) \
-                             .all()
-        cols = ['RacerID', 'Name', 'Age', 'Category', 'mu', 'sigma']
-        rows = ~df['RacerID'].isin(map(lambda x: x[0], existing_racers))
-
-        # update Racers table with new racers, who have now raced 1 time
-        df[rows][cols].assign(num_races = 1) \
-                      .to_sql('racers', db.engine, if_exists='append',
-                        index=False, method='multi')
-
-    @classmethod
-    def add_from_df(cls, df):
-        """Add to the racers table from a results DataFrame. Add by group to
-           avoid duplicate primary keys"""
-        if df['RaceCategoryName'].nunique() == 1:  # If only one group, apply to whole df
-            return cls._add_from_df(df)
-        else:  # There is a confusing issue here if there is only one group
-            return df.groupby(['RaceCategoryName']).apply(cls._add_from_df)
-
 
     @classmethod
     def add_new_racers(cls, results):
@@ -102,24 +76,13 @@ class Racers(db.Model):
                            num_races=1)
             db.session.merge(racer)
 
+
     @classmethod
     def add_sample(cls):
         for i in [161489, 118930, 149080, 108331]:
             row = cls(RacerID=i, Name='Test', mu=3, sigma=4, num_races=5)
             db.session.add(row)
             db.session.commit()
-
-
-    @classmethod
-    def get_ratings(cls, racer_ids):
-        """Get a list of (RacerID, mu, sigma, num_races) tuples given a list of
-        RacerID values"""
-        existing_ratings = (cls.query
-                               .with_entities(cls.RacerID, cls.mu, cls.sigma, cls.num_races)
-                               .filter(cls.RacerID.in_(racer_ids))
-                               .all())
-        return defaultdict(lambda: ratings.default(),
-                           {r[0]: r[1:] for r in existing_ratings})
 
 
     @classmethod
@@ -130,6 +93,7 @@ class Racers(db.Model):
         db.session.bulk_update_mappings(cls, mappings)
         db.session.flush()
         db.session.commit()
+
 
 class Results(db.Model):
     index = db.Column(db.Integer, primary_key=True)
@@ -214,6 +178,7 @@ def get_all_ratings():
         Racers.add_new_racers(results)
 
         # Join the Results and Racers tables to get prior ratings
+        # cte() essentially makes results a subquery like "WITH ... AS ..."
         results_cte = results.cte()  # WITH ... AS ...
         results_racers = \
             db.session \
