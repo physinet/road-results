@@ -18,7 +18,7 @@ from preprocess import clean
 from plotting import make_racer_plot_alt
 
 # constants to keep track of which race/racer info to show on the main page
-RACE_ID = 11557
+RACE_ID = 10000 #11557
 RACER_ID = 177974
 
 rows = [
@@ -91,6 +91,12 @@ commands.init_app(app)
 
 @app.route('/')
 def index():
+    global RACE_ID, RACER_ID
+
+    categories = Races.get_categories(RACE_ID)
+    race_table = Results.get_race_table(RACE_ID, categories[0])
+    print(race_table)
+
     chart = make_racer_plot_alt(df_brian)
 
     return render_template('index.html', race_list=race_names,
@@ -98,7 +104,8 @@ def index():
                            race_name='Test race name',
                            df=df,
                            df_racer=df_brian,
-                           chart=chart)
+                           chart=chart,
+                           race_table=race_table)
 
 
 @app.route('/', methods=['POST'])
@@ -112,7 +119,7 @@ def index_post():
 
     categories = Races.get_categories(RACE_ID)
     race_table = Results.get_race_table(RACE_ID, categories[0])
-    print(race_table.all())
+    print(race_table)
 
     if 'racer_url' in request.form:
         racer_url = request.form['racer_url']
@@ -127,7 +134,8 @@ def index_post():
                            racer_url=racer_url,
                            df=df,
                            df_racer=df_brian,
-                           chart=chart)
+                           chart=chart,
+                           race_table=race_table)
 
 
 @app.route("/search/<string:box>")

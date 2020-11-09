@@ -167,9 +167,9 @@
           </form>
           <br>
           <h5 style="text-align: center">
-            {{ df['RaceName'].values[0] }} • May 19, 2019
+            {{ race_table[0]['RaceName'] }} • May 19, 2019
             <br>
-            {{ df['RaceCategoryName'].values[0] }}
+            Category: {{ race_table[0]['RaceCategoryName'] }}
           </h5>
             <div class="table" style="margin-bottom:300px;">
               <table class="table table-bordered table-sm table-hover table-scroll">
@@ -185,15 +185,33 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for i, row in df.iterrows() %}
+                  {% for row in race_table %}
                   <tr>
-                    <td style="text-align: center; width: 15%;">{{ row['FirstName'] + ' ' + row['LastName'] }}</td>
+                    <td style="text-align: center; width: 15%;">{{ row['Name'] }}</td>
                     <td style="text-align: center; width: 25%;">{{ row['TeamName'] }}</td>
-                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['PriorPoints']) }}</td>
+                    <td style="text-align: center; width: 10%;">
+                      {% if row['prior_mu'] is not none %}
+                        {{ '%.2f, %.2f' | format(row['prior_mu'], row['prior_sigma']) }}
+                      {% else %}
+                        NONE
+                      {% endif %}
+                    </td>
                     <td style="text-align: center; width: 10%;">{{ row['PredictedPlace'] }}</td>
-                    <td style="text-align: center; width: 10%;">{{ loop.index }}</td>
-                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['Points']) }}</td>
-                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(-row['Points'] + row['PriorPoints']) }}</td>
+                    <td style="text-align: center; width: 10%;">{{ row['Place'] }}</td>
+                    <td style="text-align: center; width: 10%;">
+                      {% if row['new_mu'] is not none %}
+                        {{ '%.2f, %.2f' | format(row['new_mu'], row['new_sigma']) }}
+                      {% else %}
+                        NONE
+                      {% endif %}
+                    </td>
+                    <td style="text-align: center; width: 10%;">
+                      {% if row['prior_mu'] is not none %}
+                        {{ '%.2f, %.2f' | format(row['new_mu'] - row['prior_mu'], row['new_sigma'] - row['prior_sigma']) }}
+                      {% else %}
+                        NONE
+                      {% endif %}
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>

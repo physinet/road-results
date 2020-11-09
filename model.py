@@ -138,7 +138,9 @@ class Results(db.Model):
            Results rows"""
         return cls.query \
                   .filter(cls.race_id == race_id,
-                          cls.RaceCategoryName == RaceCategoryName) \
+                          cls.RaceCategoryName == RaceCategoryName,
+                          # cls.Place != None
+                          ) \
                   .order_by(cls.index)
 
 def add_table_results():
