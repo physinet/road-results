@@ -4,7 +4,7 @@ import glob
 
 from flask import Flask, render_template, request, jsonify, redirect
 from flask_wtf import FlaskForm
-from wtforms import SelectField, validators
+from wtforms import SelectField, SubmitField, validators
 import pandas as pd
 
 
@@ -19,7 +19,9 @@ from plotting import make_racer_plot_alt
 
 # constants to keep track of which race/racer info to show on the main page
 RACE_ID = 10000 #11557
+CATEGORY_NAME = 'Men Collegiate CAT A'
 RACER_ID = 177974
+SCROLL = ''
 
 rows = [
     {'a': 1, 'b': 2, 'c': 3},
@@ -80,6 +82,21 @@ class RaceForm(FlaskForm):
                                              for uuid, name in possible_names.items()],
                        validators=[validators.InputRequired()])
 
+class CategoryForm(FlaskForm):
+    # DELETE NAME
+    name = SelectField('race_name',
+                       # choices=race_names,
+                       # [("", "")] is needed for a placeholder
+                       choices=[("", "")] + [(uuid, name)
+                                             for uuid, name in possible_names.items()],
+                       validators=[validators.InputRequired()])
+    category = SelectField('Category')
+    submit = SubmitField('Submit')
+
+    def __init__(self, categories, *args, **kwargs):
+        super(CategoryForm, self).__init__(*args, **kwargs)
+        self.category.choices = categories
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'YOUR SECRET KEY'
@@ -89,48 +106,37 @@ database.init_app(app)
 commands.init_app(app)
 
 
-@app.route('/')
-def index():
-    global RACE_ID, RACER_ID
-
-    categories = Races.get_categories(RACE_ID)
-    race_table = Results.get_race_table(RACE_ID, categories[0])
-    print(race_table)
-
-    chart = make_racer_plot_alt(df_brian)
-
-    return render_template('index.html', race_list=race_names,
-                           form=RaceForm(),
-                           race_name='Test race name',
-                           df=df,
-                           df_racer=df_brian,
-                           chart=chart,
-                           race_table=race_table)
-
-
-@app.route('/', methods=['POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index_post():
-    global RACE_ID, RACER_ID
+    global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
+    # Get data from the form
     race_id = request.form.get('race_id')
     if race_id:
-        RACE_ID = race_id
-    RACE_ID = int(RACE_ID)
+        RACE_ID = int(race_id)
+
+    category_name = request.form.get('category')
+    if category_name:
+        CATEGORY_NAME = category_name
+
+    racer_id = request.form.get('racer_url')
+    if racer_id:
+        RACER_ID = int(racer_id)
+    racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
 
     categories = Races.get_categories(RACE_ID)
-    race_table = Results.get_race_table(RACE_ID, categories[0])
-    print(race_table)
+    if not category_name:
+        CATEGORY_NAME = categories[0]
+    race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
 
-    if 'racer_url' in request.form:
-        racer_url = request.form['racer_url']
-    else:
-        racer_url = 'https://results.bikereg.com/racer/177974'
+    category_form = CategoryForm(categories)
 
     chart = make_racer_plot_alt(df_brian)
 
     return render_template('index.html', race_list=race_names,
-                           form=RaceForm(),
-                           scroll='racer',
+                           # form=RaceForm(),
+                           form=category_form,
+                           scroll=SCROLL,
                            racer_url=racer_url,
                            df=df,
                            df_racer=df_brian,

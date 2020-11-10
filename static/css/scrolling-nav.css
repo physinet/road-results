@@ -3,6 +3,7 @@
  * Copyright 2013-2020 Start Bootstrap
  * Licensed under MIT (https://github.com/StartBootstrap/startbootstrap-scrolling-nav/blob/master/LICENSE)
  */
+
 header {
   padding: 156px 0 100px;
 }
@@ -82,4 +83,8 @@ section {
     margin-top: 10px;
     margin-bottom: 0;
     text-align: center;
+}
+
+.container{
+  min-width: 1000px;
 }
