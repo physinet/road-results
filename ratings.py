@@ -7,6 +7,15 @@ from database import db
 env = ts.TrueSkill(backend='mpmath', draw_probability=0)
 default_ratings = {'mu': env.mu, 'sigma': env.sigma, 'num_races': 1}
 
+def get_predicted_places(results):
+    """Gets the predicted place for each racer in a set of results. Placing
+       order determined by decreasing mean rating."""
+    from scipy.stats import rankdata
+
+    ranks = rankdata([-x.prior_mu for x in results], method='min')
+    for result, rank in zip(results, ranks):
+        result.predicted_place = int(rank) # convert from numpy dtype
+
 def run_trueskill(results):
     """Runs TrueSkill on the race results, where prior ratings are stored
        in prior_mu and prior_sigma attributes for each row in the results.
@@ -21,5 +30,8 @@ def run_trueskill(results):
     # returned list to access the updated ratings
     new_ratings = ts.rate([[ts.Rating(result.prior_mu, result.prior_sigma)]
                             for result in results])
-
-    return ((r[0].mu, r[0].sigma) for r in new_ratings)
+    for result, new_rating in zip(results, new_ratings):
+        result.new_mu = new_rating[0].mu
+        result.new_sigma = new_rating[0].sigma
+        if not new_rating[0].mu:
+            print(result)

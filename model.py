@@ -120,6 +120,7 @@ class Results(db.Model):
     prior_sigma = db.Column(db.Float)
     new_mu = db.Column(db.Float)
     new_sigma = db.Column(db.Float)
+    predicted_place = db.Column(db.Integer)
 
     def __repr__(self):
         return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"
@@ -142,6 +143,7 @@ class Results(db.Model):
                           # cls.Place != None
                           ) \
                   .order_by(cls.index)
+
 
 def add_table_results():
     files = glob.iglob(os.path.join(
@@ -207,6 +209,8 @@ def get_all_ratings():
         results = results.all()
         assert len(results_racers) == len(results), \
                'Some racers missing from either Results or Racers table!'
+        if len(results) == 1:  # don't rate uncontested races
+            continue
 
         # Store prior ratings in Results table
         for result, result_racers in zip(results, results_racers):
@@ -214,9 +218,8 @@ def get_all_ratings():
             result.prior_sigma = result_racers.sigma
 
         # Feed the ratings into TrueSkill
-        new_ratings = ratings.run_trueskill(results)
-        for result, new_rating in zip(results, new_ratings):
-            result.new_mu, result.new_sigma = new_rating
+        ratings.run_trueskill(results)
+        ratings.get_predicted_places(results)
 
         # Update the racers table with the new ratings
         Racers.update_ratings(results)
