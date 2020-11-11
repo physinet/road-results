@@ -20,7 +20,7 @@ from plotting import make_racer_plot_alt
 # constants to keep track of which race/racer info to show on the main page
 RACE_ID = 10000 #11557
 CATEGORY_NAME = 'Men Collegiate CAT A'
-RACER_ID = 177974
+RACER_ID = 9915  #177974
 SCROLL = ''
 
 
@@ -85,6 +85,9 @@ def index_post():
         CATEGORY_NAME = categories[0]
     race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
 
+    racer_table = model.get_racer_table(RACER_ID)
+    racer_name = Racers.get_racer_name(RACER_ID)
+
     race_form = RaceForm()
     category_form = CategoryForm(categories)
 
@@ -95,9 +98,11 @@ def index_post():
                            category_form=category_form,
                            scroll=SCROLL,
                            racer_url=racer_url,
+                           race_table=race_table,
+                           racer_table=racer_table,
+                           racer_name=racer_name,
                            df_racer=df_brian,
-                           chart=chart,
-                           race_table=race_table)
+                           chart=chart)
 
 
 @app.route("/search/<string:box>")

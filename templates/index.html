@@ -236,7 +236,7 @@
       </div>
       <div class="container">
         <div class="col-lg-10 mx-auto">
-          <h5 style="text-align: center"><br>Race history for {{ df_racer['FirstName'][0] + ' ' + df_racer['LastName'][0] }}:</h5>
+          <h5 style="text-align: center"><br>Race history for {{ racer_name }}:</h5>
           <div class="table-responsive" style="margin-bottom:400px;">
             <table class="table table-bordered table-sm table-hover table-scroll">
               <thead class="thead-dark">
@@ -249,6 +249,17 @@
                 </tr>
               </thead>
               <tbody>
+                {% for row in racer_table %}
+                <tr>
+                  <th style="text-align: center; width: 10%;" scope="row">{{ loop.index }}</th>
+                  <th style="text-align: center; width: 20%;" scope="row">{{ row['date'].strftime('%B %d, %Y') }}</th>
+                  <td style="width: 30%;">{{ row['RaceName'] }}</td>
+                  <td style="width: 20%;">{{ row['RaceCategoryName'] }}</td>
+                  <td style="text-align: center; width: 10%;">{{ row['Place'] }} / {{ row['num_racers'] }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <!-- <tbody>
                 {% for i, row in df_racer[::-1].iterrows() %}
                 <tr>
                   <th style="text-align: center; width: 10%;" scope="row">{{ loop.index }}</th>
@@ -258,7 +269,7 @@
                   <td style="text-align: center; width: 10%;">{{ row['Place'] }}</td>
                 </tr>
                 {% endfor %}
-              </tbody>
+              </tbody> -->
             </table>
           </div>
         </div>

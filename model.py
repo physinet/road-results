@@ -121,6 +121,12 @@ class Racers(db.Model):
 
 
     @classmethod
+    def get_racer_name(cls, RacerID):
+        """Get the name of the racer with given RacerID"""
+        return cls.query.filter(cls.RacerID == RacerID) \
+                  .with_entities(cls.Name).one()[0]
+
+    @classmethod
     def update_ratings(cls, results):
         """Update Racers table from list of rows from Results table."""
         mappings = [{'RacerID': r.RacerID, 'mu': r.new_mu, 'sigma': r.new_sigma}
@@ -260,3 +266,33 @@ def get_all_ratings():
 
         # Update the racers table with the new ratings
         Racers.update_ratings(results)
+
+def get_racer_table(racer_id):
+    """Returns a list of dictionaries of results for the given racer id.
+       This dictionary is the result of a join bewtween the Results and Races
+       tables and has keys: date, RaceName, RaceCategoryName, Place, and
+       num_racers, which is the number of racers corresponding to the
+       RaceCategoryName"""
+    racer_results = Results.get_racer_results(racer_id)
+    race_metadata = racer_results.join(Races, Races.race_id == Results.race_id) \
+                                 .with_entities(Results.Place,
+                                                Results.RaceName,
+                                                Results.RaceCategoryName,
+                                                Races.date,
+                                                Races.categories,
+                                                Races.num_racers)
+
+    def get_num_racers(category, categories, num_racers):
+        return num_racers[categories.index(category)]
+
+    racer_table = [{'Place': Place,
+                    'RaceName': RaceName,
+                    'RaceCategoryName': RaceCategoryName,
+                    'date': date,
+                    'num_racers': get_num_racers(RaceCategoryName,
+                                                 categories,
+                                                 num_racers)}
+                    for Place, RaceName, RaceCategoryName,
+                        date, categories, num_racers in race_metadata]
+
+    return racer_table
