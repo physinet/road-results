@@ -269,30 +269,26 @@ def get_all_ratings():
 
 def get_racer_table(racer_id):
     """Returns a list of dictionaries of results for the given racer id.
-       This dictionary is the result of a join bewtween the Results and Races
-       tables and has keys: date, RaceName, RaceCategoryName, Place, and
-       num_racers, which is the number of racers corresponding to the
-       RaceCategoryName"""
+       Each dictionary is essentially a Results row object with some
+       information joined from the Races table: date and num_racers,
+       where num_racers is the appropriate number of racers for the
+       RaceCategoryName associated with the result."""
     racer_results = Results.get_racer_results(racer_id)
     race_metadata = racer_results.join(Races, Races.race_id == Results.race_id) \
-                                 .with_entities(Results.Place,
-                                                Results.RaceName,
-                                                Results.RaceCategoryName,
-                                                Races.date,
+                                 .with_entities(Races.date,
                                                 Races.categories,
                                                 Races.num_racers)
 
     def get_num_racers(category, categories, num_racers):
         return num_racers[categories.index(category)]
 
-    racer_table = [{'Place': Place,
-                    'RaceName': RaceName,
-                    'RaceCategoryName': RaceCategoryName,
-                    'date': date,
-                    'num_racers': get_num_racers(RaceCategoryName,
-                                                 categories,
-                                                 num_racers)}
-                    for Place, RaceName, RaceCategoryName,
-                        date, categories, num_racers in race_metadata]
+    dict_merge = lambda a,b: a.update(b) or a  # updates a with b then returns a
+
+    racer_table = []
+    for row, row_meta in zip(racer_results, race_metadata):
+        meta = {'date': row_meta[0],
+                'num_racers': get_num_racers(row.RaceCategoryName,
+                                             *row_meta[1:])}
+        racer_table.append(dict_merge(row.__dict__, meta))
 
     return racer_table

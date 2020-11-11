@@ -101,7 +101,6 @@ def index_post():
                            race_table=race_table,
                            racer_table=racer_table,
                            racer_name=racer_name,
-                           df_racer=df_brian,
                            chart=chart)
 
 
