@@ -171,6 +171,20 @@ def display_single_race(methods=['GET', 'POST']):
     return render_template('database.html', cols=cols,
                             data=[q.__dict__ for q in race_table])
 
+@app.route('/racer')
+def display_single_racer(methods=['GET', 'POST']):
+    if 'id' in request.args:
+        racer_id = int(request.args.get('id'))
+    else:
+        racer_id = RACER_ID
+
+    racer_table = Results.get_racer_results(racer_id)
+
+    cols = Results.__table__.columns.keys()
+
+    return render_template('database.html', cols=cols,
+                            data=[q.__dict__ for q in racer_table])
+
 @app.after_request
 def add_header(r):
     """

@@ -22,6 +22,7 @@ class Races(db.Model):
     lat = db.Column(db.Float)
     lng = db.Column(db.Float)
     categories = db.Column(db.ARRAY(db.String), default=list)
+    num_racers = db.Column(db.ARRAY(db.Integer), default=list) # number of races per category
     _race_names = None
 
     def __repr__(self):
@@ -44,11 +45,14 @@ class Races(db.Model):
                 index=False, method='multi')
 
     @classmethod
-    def add_categories(cls, race_id, categories):
-        """Add a list of categories to the table at the given race_id"""
+    def add_at_id(cls, race_id, attribs):
+        """Add attributes to the table at the given race_id. For example,
+           if we want to add a list of categories, then attribs is a
+           dictionary like: {'categories': ['Cat 1', 'Cat 2', 'Cat 3']}"""
         # there should only be one row
         row = cls.query.filter(cls.race_id == race_id).one()
-        row.categories = categories
+        for attrib, val in attribs.items():
+            setattr(row, attrib, val)
         db.session.commit()
 
 
@@ -166,6 +170,14 @@ class Results(db.Model):
                           ) \
                   .order_by(cls.index)
 
+    @classmethod
+    def get_racer_results(cls, racer_id):
+        """For a given RacerID, returns a generator of Results rows for that
+           racer."""
+        return cls.query \
+                  .filter(cls.RacerID == racer_id) \
+                  .order_by(cls.index)
+
 
 def add_table_results():
     files = glob.iglob(os.path.join(
@@ -191,7 +203,10 @@ def add_table_results():
 
         # Add categories to the race metadata table
         categories = df['RaceCategoryName'].unique()
-        Races.add_categories(index, categories.tolist())
+        num_races = [len(df[df['RaceCategoryName'] == cat]) for cat in categories]
+
+        Races.add_at_id(index, {'categories': categories.tolist(),
+                                'num_racers': num_races})
 
 def get_all_ratings():
     """Get all ratings from using results in the Results table"""
