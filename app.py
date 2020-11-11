@@ -73,6 +73,11 @@ def index_post():
     elif 'racer_url' in request.form:
         RACER_ID = int(request.form['racer_url'])
 
+    if 'name_date' in request.form or 'category' in request.form:
+        SCROLL='race'
+    elif 'racer_url' in request.form:
+        SCROLL='racer'
+
     racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
 
     categories = Races.get_categories(RACE_ID)
