@@ -22,6 +22,7 @@ class Races(db.Model):
     lat = db.Column(db.Float)
     lng = db.Column(db.Float)
     categories = db.Column(db.ARRAY(db.String), default=list)
+    _race_names = None
 
     def __repr__(self):
         return f"Race: {self.race_id, self.name}"
@@ -58,6 +59,27 @@ class Races(db.Model):
                   .filter(cls.race_id == race_id) \
                   .with_entities(cls.categories) \
                   .one()[0]  # one row, one entity
+
+    @classmethod
+    def _get_race_names(cls):
+        """Store a dictionary with keys corresponding to a name - date
+           string and values equal to the correpsonding race ids."""
+        if not cls._race_names:
+            cls._race_names = {'{} ({})'.format(race.name,
+                                   race.date.strftime('%Y-%m-%d')): race.race_id
+                                  for race in cls.query.distinct().all()}
+        return cls._race_names
+
+    @classmethod
+    def get_race_id(cls, name_date):
+        """Get the race id for the race with the given name_date
+           (i.e., a key in the Races._race_names dictionary)"""
+        return cls._get_race_names()[name_date]
+
+    @classmethod
+    def get_race_names(cls):
+        """Return a list of the names of all races"""
+        return list(cls._get_race_names().keys())
 
 
 class Racers(db.Model):

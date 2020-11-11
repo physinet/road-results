@@ -4,7 +4,7 @@ import glob
 
 from flask import Flask, render_template, request, jsonify, redirect
 from flask_wtf import FlaskForm
-from wtforms import SelectField, SubmitField, validators
+from wtforms import SelectField, SubmitField, validators, StringField
 import pandas as pd
 
 
@@ -23,39 +23,6 @@ CATEGORY_NAME = 'Men Collegiate CAT A'
 RACER_ID = 177974
 SCROLL = ''
 
-rows = [
-    {'a': 1, 'b': 2, 'c': 3},
-    {'a': 3, 'b': 5, 'c': -6}
-] * 17
-
-df = pd.DataFrame(rows)
-
-# file = r'C:\data\results\races\9532.pkd'
-# file = os.path.join('data', 'results', '9532.pkd')
-file = os.path.join('data', 'results', '11557.pkd')
-json = dill.load(open(file, 'rb'))
-df_race = pd.read_json(json)
-columns = [str(i) for i in range(28)]
-df_race = df_race.drop(columns=columns)
-
-# df_race = df_race[df_race['RaceCategoryName'].str.strip() ==
-#                   'Men 45-49 Masters']
-df_race = df_race[df_race['RaceCategoryName'].str.strip() ==
-                  'Men Cat 5 / Citizen']
-# print(df_race)
-
-
-def get_placing(df):
-    # sort_values().reset_index(drop=True).index + 1
-    df['PredictedPlace'] = df['PriorPoints'].rank(method='max').astype(int)
-    return df
-
-
-df = df_race.groupby('RaceCategoryName').apply(get_placing)
-
-
-race_names = ['test1', 'test2', 'test3', 'bucknell']
-possible_names = {'0': 'hans', '1': 'sepp', '3': 'max'}
 
 # My results
 # file = r'C:\data\racers\177974.pkd'
@@ -73,25 +40,13 @@ df_brian['Place'] = df_brian.apply(
     lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
 df_brian['Points'] = 550 - df_brian['Points']
 
-
 class RaceForm(FlaskForm):
-    name = SelectField('race_name',
-                       # choices=race_names,
-                       # [("", "")] is needed for a placeholder
-                       choices=[("", "")] + [(uuid, name)
-                                             for uuid, name in possible_names.items()],
-                       validators=[validators.InputRequired()])
+    name_date = StringField('name_date', id='name_date')
+    submit = SubmitField('Show me this race!', id='race_name_submit')
 
 class CategoryForm(FlaskForm):
-    # DELETE NAME
-    name = SelectField('race_name',
-                       # choices=race_names,
-                       # [("", "")] is needed for a placeholder
-                       choices=[("", "")] + [(uuid, name)
-                                             for uuid, name in possible_names.items()],
-                       validators=[validators.InputRequired()])
-    category = SelectField('Category')
-    submit = SubmitField('Submit')
+    category = SelectField('Category', id='category')
+    submit = SubmitField('Show me this category!', id='category_submit')
 
     def __init__(self, categories, *args, **kwargs):
         super(CategoryForm, self).__init__(*args, **kwargs)
@@ -111,45 +66,42 @@ def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
     # Get data from the form
-    race_id = request.form.get('race_id')
-    if race_id:
-        RACE_ID = int(race_id)
+    if 'name_date' in request.form:
+        RACE_ID = Races.get_race_id(request.form['name_date'])
+    elif 'category' in request.form:
+        CATEGORY_NAME = request.form['category']
+    elif 'racer_url' in request.form:
+        RACER_ID = int(request.form['racer_url'])
 
-    category_name = request.form.get('category')
-    if category_name:
-        CATEGORY_NAME = category_name
-
-    racer_id = request.form.get('racer_url')
-    if racer_id:
-        RACER_ID = int(racer_id)
     racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
 
     categories = Races.get_categories(RACE_ID)
-    if not category_name:
+    if 'category' not in request.form:
         CATEGORY_NAME = categories[0]
     race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
 
+    race_form = RaceForm()
     category_form = CategoryForm(categories)
 
     chart = make_racer_plot_alt(df_brian)
 
-    return render_template('index.html', race_list=race_names,
-                           # form=RaceForm(),
-                           form=category_form,
+    return render_template('index.html',
+                           race_form=race_form,
+                           category_form=category_form,
                            scroll=SCROLL,
                            racer_url=racer_url,
-                           df=df,
                            df_racer=df_brian,
                            chart=chart,
                            race_table=race_table)
 
 
 @app.route("/search/<string:box>")
-def process(box):
-    query = request.args.get('query')
-    suggest_strs = [f'{i}race{i}' for i in range(100)]
-    suggestions = [{'value': s} for s in suggest_strs if query in s]
-    print(repr(query), suggestions)
+def race_suggestions(box):
+    """Create search suggestions when searching races"""
+    race_names = Races.get_race_names()
+    query = request.args.get('query').lower()
+    suggestions = [{'value': name} for name in race_names
+                                   if query in name.lower()]
     return jsonify({"suggestions": suggestions[:5]})
 
 
