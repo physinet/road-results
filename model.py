@@ -95,6 +95,7 @@ class Racers(db.Model):
     mu = db.Column(db.Float)
     sigma = db.Column(db.Float)
     num_races = db.Column(db.Integer)
+    _racer_names = None
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
@@ -119,12 +120,33 @@ class Racers(db.Model):
                            num_races=1)
             db.session.merge(racer)
 
+    @classmethod
+    def get_racer_id(cls, name):
+        """Get the race id for the given racer name
+           (i.e., a key in the Racers._racer_names dictionary)"""
+        return cls._get_racer_names()[name]
 
     @classmethod
     def get_racer_name(cls, RacerID):
         """Get the name of the racer with given RacerID"""
         return cls.query.filter(cls.RacerID == RacerID) \
                   .with_entities(cls.Name).one()[0]
+
+
+    @classmethod
+    def _get_racer_names(cls):
+        """Store a dictionary with keys corresponding to racer names
+            and values equal to the correpsonding race ids."""
+        if not cls._racer_names:
+            cls._racer_names = {racer.Name: racer.RacerID
+                                  for racer in cls.query.distinct().all()}
+        return cls._racer_names
+
+
+    @classmethod
+    def get_racer_names(cls):
+        """Returns a list of the names of all racers"""
+        return list(cls._get_racer_names().keys())
 
     @classmethod
     def update_ratings(cls, results):

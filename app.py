@@ -36,6 +36,9 @@ class CategoryForm(FlaskForm):
         super(CategoryForm, self).__init__(*args, **kwargs)
         self.category.choices = categories
 
+class RacerForm(FlaskForm):
+    racer_name = StringField('racer_name', id='racer_name')
+    submit = SubmitField('Show me this racer!', id='racer_name_submit')
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'YOUR SECRET KEY'
@@ -50,16 +53,13 @@ def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
     # Get data from the form
+    SCROLL='race'
     if 'name_date' in request.form:
         RACE_ID = Races.get_race_id(request.form['name_date'])
     elif 'category' in request.form:
         CATEGORY_NAME = request.form['category']
-    elif 'racer_url' in request.form:
-        RACER_ID = int(request.form['racer_url'])
-
-    if 'name_date' in request.form or 'category' in request.form:
-        SCROLL='race'
-    elif 'racer_url' in request.form:
+    elif 'racer_name' in request.form:
+        RACER_ID = Racers.get_racer_id(request.form['racer_name'])
         SCROLL='racer'
 
     racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
@@ -74,12 +74,14 @@ def index_post():
 
     race_form = RaceForm()
     category_form = CategoryForm(categories)
+    racer_form = RacerForm()
 
     chart = make_racer_plot_alt(racer_table)
 
     return render_template('index.html',
                            race_form=race_form,
                            category_form=category_form,
+                           racer_form=racer_form,
                            scroll=SCROLL,
                            racer_url=racer_url,
                            race_table=race_table,
@@ -90,11 +92,15 @@ def index_post():
 
 @app.route("/search/<string:box>")
 def race_suggestions(box):
-    """Create search suggestions when searching races"""
-    race_names = Races.get_race_names()
+    """Create search suggestions when searching races or racers"""
+    print(box)
+    if box == 'race_name':
+        options = Races.get_race_names()
+    elif box == 'racer_name':
+        options = Racers.get_racer_names()
     query = request.args.get('query').lower()
-    suggestions = [{'value': name} for name in race_names
-                                   if query in name.lower()]
+    suggestions = [{'value': option} for option in options
+                                   if query in option.lower()]
     return jsonify({"suggestions": suggestions[:5]})
 
 

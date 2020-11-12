@@ -228,10 +228,22 @@
           <h2>Find a racer</h2>
           Enter <a href="https://results.bikereg.com/race/11456">BikeReg racer page</a> URL:
 
-          <form method="POST">
-            <input size="50" type="text" name="racer_url" id="racer_url" placeholder="https://results.bikereg.com/racer/177974">
-            <input type="submit">
-          </form>
+          <div class="container text-center">
+            <form method="POST">
+              {{ racer_form.racer_name(size=70) }}
+              {{ racer_form.submit }}
+              <script>
+              $('#racer_name').autocomplete({
+                  serviceUrl: '/search/racer_name',
+                  dataType: 'json',
+                  lookupLimit: 5,
+                  minChars: 3,
+                  onSearchComplete: function (query, suggestions) {
+                    console.log(query);
+                  }
+              });
+              </script>
+            </form>
         </div>
       </div>
       <div class="container">
