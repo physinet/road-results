@@ -24,22 +24,6 @@ RACER_ID = 9915  #177974
 SCROLL = ''
 
 
-# My results
-# file = r'C:\data\racers\177974.pkd'
-file = os.path.join('data', 'racers', '177974.pkd')
-json = dill.load(open(file, 'rb'))
-df_brian = pd.read_json(json)
-columns = [str(i) for i in range(28)] + ['OffTheFront', 'OffTheBack',
-                                         'FieldSprintPlace', 'GroupSprintPlace',
-                                         'RaceTypeID', 'MetaDataUrl']
-df_brian = df_brian.drop(columns=columns).dropna(subset=['Points'])
-df_brian['RaceDate'] = df_brian['RaceDate'].apply(
-    lambda x: pd.to_datetime(x['date']))
-# df_brian = df_brian.set_index('RaceDate')
-df_brian['Place'] = df_brian.apply(
-    lambda x: f"{x['Place']} / {x['RacerCount']}", axis=1)
-df_brian['Points'] = 550 - df_brian['Points']
-
 class RaceForm(FlaskForm):
     name_date = StringField('name_date', id='name_date')
     submit = SubmitField('Show me this race!', id='race_name_submit')
@@ -91,7 +75,7 @@ def index_post():
     race_form = RaceForm()
     category_form = CategoryForm(categories)
 
-    chart = make_racer_plot_alt(df_brian)
+    chart = make_racer_plot_alt(racer_table)
 
     return render_template('index.html',
                            race_form=race_form,
