@@ -31,7 +31,7 @@ class Races(db.Model):
     @classmethod
     def add_from_df(cls, df):
         """Add the race metadata table from a DataFrame"""
-
+        print('Adding races from dataframe...')
         # Change coordinates tuple to two columns
         def get_lat_lng(x):
             if x['coord']:
