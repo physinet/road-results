@@ -47,13 +47,16 @@
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="#about">About</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#race">Find a race</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#racer">Find a racer</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#trueskill">About the ratings</a>
+            <a class="nav-link js-scroll-trigger" href="#trueskill">Ratings</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#contact">Contact</a>
@@ -84,54 +87,56 @@
     </div>
   </header>
 
-  <section id="data" class="bg-light">
+  <section id="about" class="bg-light">
 
 
 
     <div class="container">
       <div class="container text-center col-lg-12">
-        <h2>Place isn't everything</h2>
+        <h2>About this project</h2>
         <p style="font-size: 14pt;">
-          BikeRank uses the <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">
-          TrueSkill™ Ranking System</a>
-          to analyze the results of amateur road cycling races.
+          <b> What is BikeRank? </b><br>
+          BikeRank assigns skill ratings to amateur road cyclists based on their performance in races over time.
           <br>
-          With each new race, BikeRank updates the skill ratings for each racer considering the entire racing history of the field.
+          <b> Why should we rate cyclists? </b><br>
+          These skill ratings will help racers prepare for future races
+           by allowing them to compare their rating with those of the other
+           registrants of an upcoming race.
+          The ratings could also potentially be used to categorize racers by skill level
+          to establish fair but challenging races for equally-matched racers, as an alternative to the existing
+          <a href="https://usacycling.org/about-us/governance/policy-viii#roadupgrades">racing category</a> system.
           <br>
-          Place is just a number - BikeRank reveals each racer's skill.
+          <b> How do other points systems fall short? </b><br>
+          Existing points-based rating systems for road racing, including those from
+          <a href="https://legacy.usacycling.org/news/user/story.php?id=6998">USA Cycling</a>
+          and <a href="https://www.road-results.com/?n=talk&sn=f">BikeReg</a>,
+          do not fully account for each racer's racing history and lack
+          statistical predictions for the outcomes of future races.
+          <br>
+          <b> How does BikeRank assign ratings? </b><br>
+          BikeRank adopts the TrueSkill™ Ranking System,
+          a rating system developed initially for multiplayer online gaming.
+          Every cyclist is assigned an initial skill rating, which is updated based on
+          the outcomes of races occurring over time.
+          The combination of the final placing and previous skill rating for each racer
+          determines the amount by which each racer's rating changes.
+          Learn more about the ratings  <a class="js-scroll-trigger" href="#trueskill">below</a>.
+          <br>
+          <b> How accurate are the ratings? </b><br>
+          To do...
+          <br>
+          <b> Where do the results come from? </b><br>
+          The ratings take into consideration over 2,400,000 results from over 12,000
+          races reported on <a href="https://results.bikereg.com/">BikeReg</a>.
+          The results span the years 2006-2020 and mostly consist of races held in the United States.
+          <br>
+          <div class="container text-center col-lg-12">
+            <img src="https://results.bikereg.com/img/bikeRegLogo.png" class=".mx-auto .d-block" style="height:50px;">
+            <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" class=".mx-auto .d-block" style="height:50px;">
+           </div>
         </p>
       </div>
-      <br>
-      <div class="row text-center">
-        <div class="col">
-        <div class="numberview">
-        <h2 class="timer numberview-title numberview-number">>12,000</h2>
-        <p class="numberview-text ">Races</p>
-      </div>
-      </div>
-      <div class="col">
-        <div class="numberview">
-          <h2 class="timer numberview-title numberview-number">>190,000</h2>
-          <p class="numberview-text ">Racers</p>
-        </div>
-      </div>
-      <div class="col">
-        <div class="numberview">
-          <h2 class="timer numberview-title numberview-number">>2,400,000</h2>
-          <p class="numberview-text ">Results</p>
-        </div>
-      </div>
-     </div>
-     <br>
-     <div class="container text-center col-lg-12">
-       <img src="https://results.bikereg.com/img/bikeRegLogo.png" class=".mx-auto .d-block" style="height:50px;">
-       <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" class=".mx-auto .d-block" style="height:50px;">
-      </div>
-    </div>
-    <br>
-    <div class="container text-center col-lg-12" style="font-size: 14pt;">
-      Using 15 years of race results in the United States from <a href="https://www.road-results.com/">https://www.road-results.com/</a>
-    </div>
+
 
   </section>
 
@@ -140,7 +145,7 @@
       <div class="container">
         <div class="col-lg-10 mx-auto text-center">
           <h2>Find a race</h2>
-          Enter <a href="https://results.bikereg.com/race/11456">BikeReg race page</a> URL:
+          Enter the name of a race (or find one <a href="https://results.bikereg.com/?n=results&sn=all">here</a>):
           <div class="container text-center">
             <form method="POST">
               {{ race_form.csrf_token }}
@@ -151,7 +156,7 @@
                   serviceUrl: '/search/race_name',
                   dataType: 'json',
                   lookupLimit: 5,
-                  minChars: 3,
+                  minChars: 0,
                   onSearchComplete: function (query, suggestions) {
                     console.log(query);
                   }
@@ -228,7 +233,7 @@
       <div class="row">
         <div class="col-lg-10 mx-auto text-center">
           <h2>Find a racer</h2>
-          Enter <a href="https://results.bikereg.com/race/11456">BikeReg racer page</a> URL:
+          Enter the name of a racer (or find one <a href="https://results.bikereg.com/?n=racers&sn=find">here</a>).
 
           <div class="container text-center">
             <form method="POST">
@@ -240,7 +245,7 @@
                   serviceUrl: '/search/racer_name',
                   dataType: 'json',
                   lookupLimit: 5,
-                  minChars: 3,
+                  minChars: 0,
                   onSearchComplete: function (query, suggestions) {
                     console.log(query);
                   }
@@ -358,6 +363,7 @@
       <div class="row">
         <div class="col-lg-8 text-center mx-auto">
           <h2>Contact the author</h2>
+        </div>
           <div class="container text-center">
 
             <p class="lead">This website was created by Brian Schaefer for
@@ -369,7 +375,6 @@
               <a href="https://github.com/physinet/road-results" class="github"><i class="bx bxl-github"></i></a>
               <a href="https://www.linkedin.com/in/brian-schaefer-999683190/" class="linkedin"><i class="bx bxl-linkedin"></i></a>
             </div>
-          </div>
         </div>
       </div>
     </div>
