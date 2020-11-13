@@ -162,7 +162,7 @@
               {{ category_form.submit }}
             </form>
           </div>
-
+          {{ race_err_msg if race_err_msg }}
 
 
           <br>
@@ -245,6 +245,7 @@
               </script>
             </form>
         </div>
+        {{ racer_err_msg if racer_err_msg }}
       </div>
       <div class="container">
         <div class="col-lg-10 mx-auto">

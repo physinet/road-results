@@ -77,8 +77,9 @@ class Races(db.Model):
     @classmethod
     def get_race_id(cls, name_date):
         """Get the race id for the race with the given name_date
-           (i.e., a key in the Races._race_names dictionary)"""
-        return cls._get_race_names()[name_date]
+           (i.e., a key in the Races._race_names dictionary).
+           Returns None for invalid name_date."""
+        return cls._get_race_names().get(name_date)
 
     @classmethod
     def get_race_names(cls):
@@ -123,8 +124,9 @@ class Racers(db.Model):
     @classmethod
     def get_racer_id(cls, name):
         """Get the race id for the given racer name
-           (i.e., a key in the Racers._racer_names dictionary)"""
-        return cls._get_racer_names()[name]
+           (i.e., a key in the Racers._racer_names dictionary).
+           Returns None for invalid racer name."""
+        return cls._get_racer_names().get(name)
 
     @classmethod
     def get_racer_name(cls, RacerID):

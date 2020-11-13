@@ -53,14 +53,29 @@ def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
     # Get data from the form
-    SCROLL='race'
+    race_err_msg = None
+    racer_err_msg = None
+    SCROLL = 'race'
     if 'name_date' in request.form:
-        RACE_ID = Races.get_race_id(request.form['name_date'])
+        name_date = request.form['name_date']
+        race_id = Races.get_race_id(name_date)
+        if race_id:
+            RACE_ID = race_id
+        else:
+            race_err_msg = f'Can\'t find a race by the name {name_date}!\n'
     elif 'category' in request.form:
-        CATEGORY_NAME = request.form['category']
+        CATEGORY_NAME = request.form['category']  # don't expect to be invalid
     elif 'racer_name' in request.form:
-        RACER_ID = Racers.get_racer_id(request.form['racer_name'])
-        SCROLL='racer'
+        SCROLL = 'racer'
+        racer_name = request.form['racer_name']
+        racer_id = Racers.get_racer_id(racer_name)
+        if racer_id:
+            RACER_ID = racer_id
+        else:
+            racer_err_msg = f'Can\'t find a racer by the name {racer_name}!\n'
+
+    else:  # GET
+        SCROLL = ''
 
     racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
 
@@ -87,6 +102,8 @@ def index_post():
                            race_table=race_table,
                            racer_table=racer_table,
                            racer_name=racer_name,
+                           race_err_msg=race_err_msg,
+                           racer_err_msg=racer_err_msg,
                            chart=chart)
 
 
