@@ -163,7 +163,7 @@
               {{ category_form.category }}
               {{ category_form.submit }}
             </form>
-            {{ race_err_msg if race_err_msg }}
+            {{ race_form.errors.get('name_date')[0] if 'name_date' in race_form.errors }}
           </div>
 
 
@@ -247,7 +247,7 @@
               });
               </script>
             </form>
-            {{ racer_err_msg if racer_err_msg }}
+            {{ racer_form.errors.get('racer_name')[0] if 'racer_name' in racer_form.errors }}
         </div>
       </div>
       <div class="container">

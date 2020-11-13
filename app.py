@@ -32,7 +32,8 @@ class RaceForm(FlaskForm):
 
     def __init__(self, race_names, *args, **kwargs):
         super(RaceForm, self).__init__(*args, **kwargs)
-        self.name_date.validators = [AnyOf(race_names)]
+        self.name_date.validators = [AnyOf(race_names,
+            message=f'Can\'t find a race by the name {self.name_date.data}!\n')]
 
 class CategoryForm(FlaskForm):
     category = SelectField('Category', id='category')
@@ -48,7 +49,8 @@ class RacerForm(FlaskForm):
 
     def __init__(self, racer_names, *args, **kwargs):
         super(RacerForm, self).__init__(*args, **kwargs)
-        self.racer_name.validators = [AnyOf(racer_names, message='NO')]
+        self.racer_name.validators = [AnyOf(racer_names,
+            message=f'Can\'t find a racer by the name {self.racer_name.data}!\n')]
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
@@ -62,29 +64,22 @@ commands.init_app(app)
 def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
-    race_err_msg = None
-    racer_err_msg = None
-
     race_form = RaceForm(Races.get_race_names())
     name_date = request.form.get('name_date')
     if race_form.validate_on_submit():
         RACE_ID = Races.get_race_id(name_date)
-    else:
-        race_err_msg = f'Can\'t find a race by the name {name_date}!\n'
 
     categories = Races.get_categories(RACE_ID)
     category_form = CategoryForm(categories)
     if category_form.validate_on_submit():
         CATEGORY_NAME = request.form['category']
-    elif CATEGORY_NAME not in categories:
+    elif CATEGORY_NAME.lower() not in [c.lower() for c in categories]:
         CATEGORY_NAME = categories[0]
 
     racer_form = RacerForm(Racers.get_racer_names())
     racer_name = request.form.get('racer_name')
     if racer_form.validate_on_submit():
         RACER_ID = Racers.get_racer_id(racer_name)
-    else:
-        racer_err_msg = f'Can\'t find a racer by the name {racer_name}!\n'
 
     if racer_name:
         SCROLL = 'racer'
@@ -108,8 +103,6 @@ def index_post():
                            race_table=race_table,
                            racer_table=racer_table,
                            racer_name=racer_name,
-                           race_err_msg=race_err_msg,
-                           racer_err_msg=racer_err_msg,
                            chart=chart)
 
 
