@@ -83,7 +83,7 @@ def index_post():
 
     if racer_name:
         SCROLL = 'racer'
-    else:
+    elif name_date or category_form.validate_on_submit():
         SCROLL = 'race'
 
     racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
@@ -141,6 +141,9 @@ def preview_database(methods=['GET', 'POST']):
 
     if request.args.get('rate'):
         model.get_all_ratings()
+
+    if request.args.get('filter'):
+        model.filter_races()
 
     if request.args.get('table'):
         Table = eval(request.args.get('table'))

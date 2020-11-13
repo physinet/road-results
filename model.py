@@ -244,6 +244,7 @@ def filter_races():
     races = Results.query.with_entities(Results.race_id).distinct().all()
     races = [race for race, in races]
     Races.query.filter(~Races.race_id.in_(races)).delete('fetch')
+    db.session.commit()
 
 def get_all_ratings():
     """Get all ratings from using results in the Results table"""
