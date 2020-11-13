@@ -4,7 +4,9 @@ import glob
 
 from flask import Flask, render_template, request, jsonify, redirect
 from flask_wtf import FlaskForm
-from wtforms import SelectField, SubmitField, validators, StringField
+from flask_wtf.csrf import CSRFProtect
+from wtforms import SelectField, SubmitField, StringField, validators
+from wtforms.validators import AnyOf
 import pandas as pd
 
 
@@ -28,6 +30,10 @@ class RaceForm(FlaskForm):
     name_date = StringField('name_date', id='name_date')
     submit = SubmitField('Show me this race!', id='race_name_submit')
 
+    def __init__(self, race_names, *args, **kwargs):
+        super(RaceForm, self).__init__(*args, **kwargs)
+        self.name_date.validators = [AnyOf(race_names)]
+
 class CategoryForm(FlaskForm):
     category = SelectField('Category', id='category')
     submit = SubmitField('Show me this category!', id='category_submit')
@@ -40,10 +46,14 @@ class RacerForm(FlaskForm):
     racer_name = StringField('racer_name', id='racer_name')
     submit = SubmitField('Show me this racer!', id='racer_name_submit')
 
+    def __init__(self, racer_names, *args, **kwargs):
+        super(RacerForm, self).__init__(*args, **kwargs)
+        self.racer_name.validators = [AnyOf(racer_names, message='NO')]
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'YOUR SECRET KEY'
 app.config.from_object(os.environ['APP_SETTINGS'])
 
+csrf = CSRFProtect(app)
 database.init_app(app)
 commands.init_app(app)
 
@@ -52,44 +62,40 @@ commands.init_app(app)
 def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
-    # Get data from the form
     race_err_msg = None
     racer_err_msg = None
-    SCROLL = 'race'
-    if 'name_date' in request.form:
-        name_date = request.form['name_date']
-        race_id = Races.get_race_id(name_date)
-        if race_id:
-            RACE_ID = race_id
-        else:
-            race_err_msg = f'Can\'t find a race by the name {name_date}!\n'
-    elif 'category' in request.form:
-        CATEGORY_NAME = request.form['category']  # don't expect to be invalid
-    elif 'racer_name' in request.form:
-        SCROLL = 'racer'
-        racer_name = request.form['racer_name']
-        racer_id = Racers.get_racer_id(racer_name)
-        if racer_id:
-            RACER_ID = racer_id
-        else:
-            racer_err_msg = f'Can\'t find a racer by the name {racer_name}!\n'
 
-    else:  # GET
-        SCROLL = ''
+    race_form = RaceForm(Races.get_race_names())
+    name_date = request.form.get('name_date')
+    if race_form.validate_on_submit():
+        RACE_ID = Races.get_race_id(name_date)
+    else:
+        race_err_msg = f'Can\'t find a race by the name {name_date}!\n'
+
+    categories = Races.get_categories(RACE_ID)
+    category_form = CategoryForm(categories)
+    if category_form.validate_on_submit():
+        CATEGORY_NAME = request.form['category']
+    elif CATEGORY_NAME not in categories:
+        CATEGORY_NAME = categories[0]
+
+    racer_form = RacerForm(Racers.get_racer_names())
+    racer_name = request.form.get('racer_name')
+    if racer_form.validate_on_submit():
+        RACER_ID = Racers.get_racer_id(racer_name)
+    else:
+        racer_err_msg = f'Can\'t find a racer by the name {racer_name}!\n'
+
+    if racer_name:
+        SCROLL = 'racer'
+    else:
+        SCROLL = 'race'
 
     racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
 
-    categories = Races.get_categories(RACE_ID)
-    if 'category' not in request.form:
-        CATEGORY_NAME = categories[0]
     race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
-
     racer_table = model.get_racer_table(RACER_ID)
     racer_name = Racers.get_racer_name(RACER_ID)
-
-    race_form = RaceForm()
-    category_form = CategoryForm(categories)
-    racer_form = RacerForm()
 
     chart = make_racer_plot_alt(racer_table)
 
@@ -110,7 +116,7 @@ def index_post():
 @app.route("/search/<string:box>")
 def race_suggestions(box):
     """Create search suggestions when searching races or racers"""
-    print(box)
+
     if box == 'race_name':
         options = Races.get_race_names()
     elif box == 'racer_name':
@@ -138,6 +144,7 @@ def preview_database(methods=['GET', 'POST']):
         df = pd.read_pickle('C:/data/results/df.pkl')
         model.Races.add_from_df(df)
         model.add_table_results()
+        model.filter_races()
 
     if request.args.get('rate'):
         model.get_all_ratings()

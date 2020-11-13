@@ -238,6 +238,13 @@ def add_table_results():
         Races.add_at_id(index, {'categories': categories.tolist(),
                                 'num_racers': num_races})
 
+def filter_races():
+    """Drop rows from the races table that correspond to races NOT represented
+       in the Results table - these are not in the database yet"""
+    races = Results.query.with_entities(Results.race_id).distinct().all()
+    races = [race for race, in races]
+    Races.query.filter(~Races.race_id.in_(races)).delete('fetch')
+
 def get_all_ratings():
     """Get all ratings from using results in the Results table"""
     results_to_rate = Results.query.filter(Results.Place != None)  # drop DNFs

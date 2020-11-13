@@ -36,6 +36,7 @@
 
 <body id="page-top">
 
+
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
     <div class="container">
@@ -80,7 +81,6 @@
       <p class="lead">Anticipate your results</p>
       <br>
       <br>
-
     </div>
   </header>
 
@@ -143,6 +143,7 @@
           Enter <a href="https://results.bikereg.com/race/11456">BikeReg race page</a> URL:
           <div class="container text-center">
             <form method="POST">
+              {{ race_form.csrf_token }}
               {{ race_form.name_date(size=70) }}
               {{ race_form.submit }}
               <script>
@@ -158,11 +159,12 @@
               </script>
             </form>
             <form method="POST">
+              {{ category_form.csrf_token }}
               {{ category_form.category }}
               {{ category_form.submit }}
             </form>
+            {{ race_err_msg if race_err_msg }}
           </div>
-          {{ race_err_msg if race_err_msg }}
 
 
           <br>
@@ -230,6 +232,7 @@
 
           <div class="container text-center">
             <form method="POST">
+              {{ racer_form.csrf_token }}
               {{ racer_form.racer_name(size=70) }}
               {{ racer_form.submit }}
               <script>
@@ -244,8 +247,8 @@
               });
               </script>
             </form>
+            {{ racer_err_msg if racer_err_msg }}
         </div>
-        {{ racer_err_msg if racer_err_msg }}
       </div>
       <div class="container">
         <div class="col-lg-10 mx-auto">
