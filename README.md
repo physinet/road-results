@@ -1,6 +1,7 @@
 # BikeRank: skill ratings for amateur road cyclists
 
-This application was created by [Brian Schaefer](https://www.linkedin.com/in/briantschaefer/) for [The Data Incubator](https://www.thedataincubator.com/) (Fall 2020 cohort).
+This is a **working draft** of an application created by [Brian Schaefer](https://www.linkedin.com/in/briantschaefer/) for [The Data Incubator](https://www.thedataincubator.com/) (Fall 2020 cohort).
+This project will be finalized by **December 1, 2020**. Until then, please excuse any shortcomings.
 
 BikeRank adopts the [TrueSkill™ Ranking System](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/) to [amateur road cycling races](https://results.bikereg.com/).
 View this project online at: http://bike-rank.herokuapp.com/ (may take a few seconds on first load).
