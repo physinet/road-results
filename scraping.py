@@ -45,10 +45,12 @@ def scrape_race_pages(race_ids=list(range(1, 13000))):
     session = FuturesSession(max_workers=8)
     futures = [session.get(f'https://results.bikereg.com/race/{i}') for i in race_ids]
     print('Scraping race pages!')
-    for race_id, future in zip(race_ids, futures):
+    rows = [{} for _ in race_ids]
+    for i, (race_id, future) in enumerate(zip(race_ids, futures)):
         print(f'Scraping race with id {race_id}')
         if race_id in [12533, 12534]:  # these didn't work - ignoring
             continue
-        row = get_metadata(future.result().text)
-        row['race_id'] = race_id
-        Races.add(row)
+        rows[i] = dict(race_id=race_id, **get_metadata(future.result().text))
+
+    print('Committing scraped race pages to database...')
+    Races.add(rows)

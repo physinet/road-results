@@ -29,11 +29,11 @@ class Races(db.Model):
         return f"Race: {self.race_id, self.name}"
 
     @classmethod
-    def add(cls, row):
-        """Add to the Races table given a row (dictionary with keys matching
-        the columns of the table
+    def add(cls, rows):
+        """Add rows to the Races table. rows is a list of dictionaries
+        with keys matching the column names for the table.
         """
-        db.session.merge(cls(**row))
+        db.session.add_all([cls(**row) for row in rows])
         db.session.commit()
 
     @classmethod
