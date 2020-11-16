@@ -50,7 +50,8 @@ def scrape_race_pages(race_ids=list(range(1, 13000))):
         print(f'Scraping race with id {race_id}')
         if race_id in [12533, 12534]:  # these didn't work - ignoring
             continue
-        rows[i] = dict(race_id=race_id, **get_metadata(future.result().text))
+        row = get_metadata(future.result().text)
+        if row:
+            rows[i] = dict(race_id=race_id, **row)
 
-    print('Committing scraped race pages to database...')
-    Races.add(rows)
+    return rows

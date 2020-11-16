@@ -145,9 +145,14 @@ def preview_database(methods=['GET', 'POST']):
         if request.args.get('add'):
             if Results.query.count() > 0:
                 raise Exception('Rows exist in Results table. Can\'t add!')
+
             race_ids = list(range(10000, 10011))
-            scraping.scrape_race_pages(race_ids)
+            rows = scraping.scrape_race_pages(race_ids)
+            print('Committing scraped race pages to database...')
+            Races.add(rows)
+
             model.add_table_results(id_range=(10000,10010))
+            model.add_categories()
             model.filter_races()
 
         if request.args.get('rate'):
@@ -160,13 +165,8 @@ def preview_database(methods=['GET', 'POST']):
         Table = eval(request.args.get('table'))
     else:
         Table = Results
-    queries = Table.query.order_by(Table.index)
 
-    if Table == Races:
-        queries = queries.filter(Table.index > 10000) # for troubleshooting
-
-    queries = queries.limit(2000)
-
+    queries = Table.query.order_by(Table.index).limit(2000)
     cols = Table.__table__.columns.keys()
 
     return render_template('database.html', cols=cols,

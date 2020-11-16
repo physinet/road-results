@@ -12,7 +12,23 @@ from preprocess import clean
 import ratings
 
 
-class Races(db.Model):
+class Model:
+    def __init__(self, **entries):
+        """Custom init to ignore keyword arguments not in the table schema."""
+        self.__dict__.update(entries)
+
+
+    @classmethod
+    def add(cls, rows):
+        """Add rows to the table. rows is a list of dictionaries
+        with keys matching the column names for the table.
+        """
+        # Filter out empty dictionaries
+        db.session.add_all([cls(**row) for row in filter(lambda x: x, rows)])
+        db.session.commit()
+
+
+class Races(Model, db.Model):
     race_id = db.Column(db.Integer, primary_key=True)
     index = synonym('race_id')
     name = db.Column(db.String)
@@ -27,14 +43,6 @@ class Races(db.Model):
 
     def __repr__(self):
         return f"Race: {self.race_id, self.name}"
-
-    @classmethod
-    def add(cls, rows):
-        """Add rows to the Races table. rows is a list of dictionaries
-        with keys matching the column names for the table.
-        """
-        db.session.add_all([cls(**row) for row in rows])
-        db.session.commit()
 
 
     @classmethod
@@ -87,7 +95,7 @@ class Races(db.Model):
         db.session.commit()
 
 
-class Racers(db.Model):
+class Racers(Model, db.Model):
     RacerID = db.Column(db.Integer, primary_key=True)
     index = synonym('RacerID')
     Name = db.Column(db.String)
@@ -160,8 +168,9 @@ class Racers(db.Model):
         db.session.commit()
 
 
-class Results(db.Model):
-    index = db.Column(db.Integer, primary_key=True)
+class Results(Model, db.Model):
+    ResultID = db.Column(db.Integer, primary_key=True)
+    index = synonym('ResultID')
     Place = db.Column(db.Integer)
     Name = db.Column(db.String)
     Age = db.Column(db.Integer)
@@ -181,13 +190,6 @@ class Results(db.Model):
     def __repr__(self):
         return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"
 
-    @classmethod
-    def add_from_df(cls, df):
-        """Add to the results table from a DataFrame"""
-        cols = ['Place', 'Name', 'Age', 'Category', 'RacerID', 'TeamID',
-                'TeamName', 'RaceName', 'RaceCategoryName', 'race_id']
-        df[cols].to_sql('results', db.engine, if_exists='append',
-                index=False, method='multi')
 
     @classmethod
     def get_race_table(cls, race_id, RaceCategoryName):
@@ -209,6 +211,38 @@ class Results(db.Model):
                   .order_by(cls.index)
 
 
+def add_categories():
+    """Update the Races table with the categories represented in the
+    Results table.
+    """
+    # (Race ID, category name, number of racers in that category)
+    cat_counts = (Results.query
+                         .with_entities(
+                            Results.race_id,
+                            Results.RaceCategoryName,
+                            func.count(Results.RaceCategoryName).label('count')
+                        ).group_by(Results.race_id, Results.RaceCategoryName)
+                         .all()
+                        )
+    # collected = cat_counts.query.with_entities(cat_counts.c.count).all()
+    # print(collected)
+
+    # REDO USING SQLALCHEMY
+    race_ids = set()
+    for cc in cat_counts:
+        race_ids.add(cc[0])
+    for race_id in race_ids:
+        categories = []
+        num_racers = []
+        for cc in cat_counts:
+            if race_id == cc[0]:
+                categories.append(cc[1])
+                num_racers.append(cc[2])
+
+        Races.update_at_id(race_id, {'categories': categories,
+                                     'num_racers': num_racers})
+
+
 def add_table_results(id_range=(0,13000)):
     """Add to the Results table from locally saved pickled json files.
     id_range sets the range of race_ids we should load into the database.
@@ -220,28 +254,19 @@ def add_table_results(id_range=(0,13000)):
 
     print('Building database!')
     for f in files:
-        index = int(os.path.split(f)[-1].split('.')[0])  # extract index
-        if index < id_min or index > id_max:
+        race_id = int(os.path.split(f)[-1].split('.')[0])  # extract race_id
+        if race_id < id_min or race_id > id_max:
             continue
-        print(index)
-        json = dill.load(open(f, 'rb'))
+        print(race_id)
 
-        df = pd.read_json(json)
-        if df.empty:
-            continue
-        df = clean(df).assign(race_id=index)
-        if df.empty:
-            continue
+        import json
+        rows = json.loads(dill.load(open(f, 'rb')))
+        [row.update({'race_id': race_id}) for row in rows]
 
+        rows = clean(rows)
         # Add results directly from file without updating ratings
-        Results.add_from_df(df)
+        Results.add(rows)
 
-        # Add categories to the race metadata table
-        categories = df['RaceCategoryName'].unique()
-        num_races = [len(df[df['RaceCategoryName'] == cat]) for cat in categories]
-
-        Races.update_at_id(index, {'categories': categories.tolist(),
-                                   'num_racers': num_races})
 
 def filter_races():
     """Drop rows from the races table that correspond to races NOT represented

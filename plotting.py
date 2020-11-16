@@ -11,6 +11,7 @@ def make_racer_plot_alt(racer_table):
     """Plot each racer's rating over time using altair"""
 
     df = pd.DataFrame.from_records(racer_table, exclude=['_sa_instance_state'])
+    print(df)
     df['date'] = df['date'].dt.strftime('%m/%d/%y')
     df['Place'] = df['Place'].astype(str) + ' / ' + df['num_racers'].astype(str)
 
@@ -26,7 +27,7 @@ def make_racer_plot_alt(racer_table):
     df['mu-sigma'] = df['new_mu'] - df['new_sigma']
 
 
-    df = df.drop(columns=['index']).reset_index()  # Repalce "index" column with index of df
+    df = df.reset_index()  # Replace "index" column with index of df
 
     mu = alt.Chart(df).encode(
         x=alt.X('index', title='Race number',
