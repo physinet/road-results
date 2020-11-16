@@ -13,6 +13,7 @@ import pandas as pd
 import commands
 import database
 import model
+import scraping
 from model import Results, Races, Racers
 
 from preprocess import clean
@@ -144,9 +145,9 @@ def preview_database(methods=['GET', 'POST']):
         if request.args.get('add'):
             if Results.query.count() > 0:
                 raise Exception('Rows exist in Results table. Can\'t add!')
-            df = pd.read_pickle('C:/data/results/df.pkl')
-            model.Races.add_from_df(df)
-            model.add_table_results()
+            race_ids = list(range(10000, 10011))
+            scraping.scrape_race_pages(race_ids)
+            model.add_table_results(id_range=(10000,10010))
             model.filter_races()
 
         if request.args.get('rate'):

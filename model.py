@@ -29,20 +29,12 @@ class Races(db.Model):
         return f"Race: {self.race_id, self.name}"
 
     @classmethod
-    def add_from_df(cls, df):
-        """Add the race metadata table from a DataFrame"""
-        print('Adding races from dataframe...')
-        # Change coordinates tuple to two columns
-        def get_lat_lng(x):
-            if x['coord']:
-                x['lat'] = float(x['coord'][0])
-                x['lng'] = float(x['coord'][1])
-            return x
-        df = df.apply(get_lat_lng, axis=1).reset_index()
-
-        cols = ['race_id', 'name', 'date', 'loc', 'json_url', 'lat', 'lng']
-        df[cols].to_sql('races', db.engine, if_exists='append',
-                index=False, method='multi')
+    def add(cls, row):
+        """Add to the Races table given a row (dictionary with keys matching
+        the columns of the table
+        """
+        db.session.merge(cls(**row))
+        db.session.commit()
 
     @classmethod
     def add_at_id(cls, race_id, attribs):
@@ -216,14 +208,19 @@ class Results(db.Model):
                   .order_by(cls.index)
 
 
-def add_table_results():
+def add_table_results(id_range=(0,13000)):
+    """Add to the Results table from locally saved pickled json files.
+    id_range sets the range of race_ids we should load into the database.
+    """
     files = glob.iglob(os.path.join(
         'C:\\', 'data', 'results', 'races', '*.pkd'))
+
+    id_min, id_max = id_range
 
     print('Building database!')
     for f in files:
         index = int(os.path.split(f)[-1].split('.')[0])  # extract index
-        if index < 10000 or index > 10011:
+        if index < id_min or index > id_max:
             continue
         print(index)
         json = dill.load(open(f, 'rb'))
