@@ -36,17 +36,6 @@ class Races(db.Model):
         db.session.add_all([cls(**row) for row in rows])
         db.session.commit()
 
-    @classmethod
-    def add_at_id(cls, race_id, attribs):
-        """Add attributes to the table at the given race_id. For example,
-           if we want to add a list of categories, then attribs is a
-           dictionary like: {'categories': ['Cat 1', 'Cat 2', 'Cat 3']}"""
-        # there should only be one row
-        row = cls.query.filter(cls.race_id == race_id).one()
-        for attrib, val in attribs.items():
-            setattr(row, attrib, val)
-        db.session.commit()
-
 
     @classmethod
     def get_categories(cls, race_id):
@@ -84,6 +73,18 @@ class Races(db.Model):
     def get_race_names(cls):
         """Return a list of the names of all races"""
         return list(cls._get_race_names().keys())
+
+
+    @classmethod
+    def update_at_id(cls, race_id, attribs):
+        """Update attributes to the table at the given race_id. For example,
+           if we want to update the list of categories, then attribs is a
+           dictionary like: {'categories': ['Cat 1', 'Cat 2', 'Cat 3']}"""
+        # there should only be one row
+        row = cls.query.filter(cls.race_id == race_id).one()
+        for attrib, val in attribs.items():
+            setattr(row, attrib, val)
+        db.session.commit()
 
 
 class Racers(db.Model):
@@ -239,8 +240,8 @@ def add_table_results(id_range=(0,13000)):
         categories = df['RaceCategoryName'].unique()
         num_races = [len(df[df['RaceCategoryName'] == cat]) for cat in categories]
 
-        Races.add_at_id(index, {'categories': categories.tolist(),
-                                'num_racers': num_races})
+        Races.update_at_id(index, {'categories': categories.tolist(),
+                                   'num_racers': num_races})
 
 def filter_races():
     """Drop rows from the races table that correspond to races NOT represented
