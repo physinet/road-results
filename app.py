@@ -19,7 +19,7 @@ from preprocess import clean
 
 from plotting import make_racer_plot_alt
 
-# constants to keep track of which race/racer info to show on the main page
+# global variables to keep track of which race/racer info to show
 RACE_ID = 10000 #11557
 CATEGORY_NAME = 'Men Collegiate CAT A'
 RACER_ID = 9915  #177974
@@ -27,13 +27,15 @@ SCROLL = ''
 
 
 class RaceForm(FlaskForm):
-    name_date = StringField('name_date', id='name_date')
+    name_date = StringField('name_date', id='name_date',
+                 filters=[lambda x: x or Races.get_race_name_date(RACE_ID)])
+            # Filter to transform empty string into the currently selected race
     submit = SubmitField('Show me this race!', id='race_name_submit')
 
     def __init__(self, race_names, *args, **kwargs):
         super(RaceForm, self).__init__(*args, **kwargs)
-        self.name_date.validators = [AnyOf(race_names,
-            message=f'Can\'t find a race by the name {self.name_date.data}!\n')]
+        msg = f'Can\'t find a race by the name {self.name_date.data}!\n'
+        self.name_date.validators = [AnyOf(race_names, message=msg)]
 
 class CategoryForm(FlaskForm):
     category = SelectField('Category', id='category')
@@ -44,13 +46,15 @@ class CategoryForm(FlaskForm):
         self.category.choices = categories
 
 class RacerForm(FlaskForm):
-    racer_name = StringField('racer_name', id='racer_name')
+    racer_name = StringField('racer_name', id='racer_name',
+                 filters=[lambda x: x or Racers.get_racer_name(RACER_ID)])
+            # Filter to transform empty string into the currently selected racer
     submit = SubmitField('Show me this racer!', id='racer_name_submit')
 
     def __init__(self, racer_names, *args, **kwargs):
         super(RacerForm, self).__init__(*args, **kwargs)
-        self.racer_name.validators = [AnyOf(racer_names,
-            message=f'Can\'t find a racer by the name {self.racer_name.data}!\n')]
+        msg = f'Can\'t find a racer by the name {self.racer_name.data}!\n'
+        self.racer_name.validators = [AnyOf(racer_names, message=msg)]
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
@@ -64,29 +68,40 @@ commands.init_app(app)
 def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
-    race_form = RaceForm(Races.get_race_names())
+    # Get whichever fields were submitted - 2 out of 3 of these should be None
     name_date = request.form.get('name_date')
-    if race_form.validate_on_submit():
+    category = request.form.get('category')
+    racer_name = request.form.get('racer_name')
+
+    # Race form - update RACE_ID if valid name_date submitted
+    race_form = RaceForm(Races.get_race_names())
+    if race_form.validate_on_submit() and name_date:
         RACE_ID = Races.get_race_id(name_date)
 
+    # Category form - update CATEGORY_NAME with first category or selected cat
     categories = Races.get_categories(RACE_ID)
     category_form = CategoryForm(categories)
     if category_form.validate_on_submit():
-        CATEGORY_NAME = request.form['category']
+        CATEGORY_NAME = category
     elif CATEGORY_NAME.lower() not in [c.lower() for c in categories]:
         CATEGORY_NAME = categories[0]
 
+    # Racer form - update RACER_ID if valid racer name submitted
     racer_form = RacerForm(Racers.get_racer_names())
-    racer_name = request.form.get('racer_name')
-    if racer_form.validate_on_submit():
+    if racer_form.validate_on_submit() and racer_name:
         RACER_ID = Racers.get_racer_id(racer_name)
 
-    if racer_name:
-        SCROLL = 'racer'
-    elif name_date or category_form.validate_on_submit():
+    # Scroll to appropriate part of website depending on what field submitted
+    if name_date or category:
         SCROLL = 'race'
+    elif racer_name:
+        SCROLL = 'racer'
 
-    racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
+    # Reset data in form fields to show placeholder text again
+    race_form.name_date.description = Races.get_race_name_date(RACE_ID)
+    race_form.name_date.data = ''
+    racer_form.racer_name.description = Racers.get_racer_name(RACER_ID)
+    racer_form.racer_name.data = ''
 
     race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
     racer_table = model.get_racer_table(RACER_ID)
@@ -99,7 +114,6 @@ def index_post():
                            category_form=category_form,
                            racer_form=racer_form,
                            scroll=SCROLL,
-                           racer_url=racer_url,
                            race_table=race_table,
                            racer_table=racer_table,
                            racer_name=racer_name,

@@ -65,6 +65,13 @@ class Races(db.Model):
                   .one()[0]  # one row, one entity
 
     @classmethod
+    def get_race_id(cls, name_date):
+        """Get the race id for the race with the given name_date
+           (i.e., a key in the Races._race_names dictionary).
+           Returns None for invalid name_date."""
+        return cls._get_race_names().get(name_date)
+
+    @classmethod
     def _get_race_names(cls):
         """Store a dictionary with keys corresponding to a name - date
            string and values equal to the correpsonding race ids."""
@@ -75,11 +82,11 @@ class Races(db.Model):
         return cls._race_names
 
     @classmethod
-    def get_race_id(cls, name_date):
-        """Get the race id for the race with the given name_date
-           (i.e., a key in the Races._race_names dictionary).
-           Returns None for invalid name_date."""
-        return cls._get_race_names().get(name_date)
+    def get_race_name_date(cls, race_id):
+        """Get the name and date of the race with given race_id"""
+        name, date =  cls.query.filter(cls.race_id == race_id) \
+                         .with_entities(cls.name, cls.date).one()
+        return '{} ({})'.format(name, date.strftime('%Y-%m-%d'))
 
     @classmethod
     def get_race_names(cls):
