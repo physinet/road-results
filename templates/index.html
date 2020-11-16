@@ -19,12 +19,8 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/1.2.26/jquery.autocomplete.min.js"></script>
-  <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.1.min.js" crossorigin="anonymous"></script>
 
 <!-- For altair -->
-<!-- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega@4"></script>
- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-lite@3.2.1"></script>
- <script type="text/javascript" src="https://cdn.jsdelivr.net/npm//vega-embed@3"></script> -->
 
  <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
  <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
@@ -34,11 +30,12 @@
     document.location.hash = '#' + '{{ scroll }}';
   </script>
 
-<!-- Icon -->
-<link href="data:image/x-icon;base64,AAABAAEAEBAAAAAAAABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYZHesXGh//Fxof/xcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8WGR3rAAAAABYZHvUAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAwMEFAAAAAAXGh//AAAAAAAAAAAAAAAAAAAAABYZHvUXGh//AAAAAAAAAAAAAAAAAAAAAA8RFZcAAAAAAAAAABcaH/8XGh//Fxof/w8RFZIAAAAAAAAAAAAAAAAXGh//Fxof/wAAAAAAAAAAFxof/wAAAAASFBiwAAAAABcaH/8UFxvaAAAAABETF6QAAAAAFxof/wAAAAAAAAAAFxof/xUXHNkAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8AAAAAAAAAABYZHukXGh//DhIVhAAAAAAAAAAAAAAAABUXHNkAAAAAERMXnhcaH/8XGh//Fxof/hcaH/8AAAAAAAAAAAAAAAAXGh//AAAAABYZHvwXGh//Fxof/xETFp4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGR7yFxoe8RUYHfAVGB3uFRgd7g0OEnUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAAAAABcaH/8XGh//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAP//AAD//wAA//8AAIfhAAB73gAAew4AAGpWAABxjgAAg6EAAPg/AAD7nwAA+/8AAP//AAD//wAA//8AAA==" rel="icon" type="image/x-icon" />
-</head>
+  <!-- Icon -->
+  <link href="data:image/x-icon;base64,AAABAAEAEBAAAAAAAABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYZHesXGh//Fxof/xcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8WGR3rAAAAABYZHvUAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAwMEFAAAAAAXGh//AAAAAAAAAAAAAAAAAAAAABYZHvUXGh//AAAAAAAAAAAAAAAAAAAAAA8RFZcAAAAAAAAAABcaH/8XGh//Fxof/w8RFZIAAAAAAAAAAAAAAAAXGh//Fxof/wAAAAAAAAAAFxof/wAAAAASFBiwAAAAABcaH/8UFxvaAAAAABETF6QAAAAAFxof/wAAAAAAAAAAFxof/xUXHNkAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8AAAAAAAAAABYZHukXGh//DhIVhAAAAAAAAAAAAAAAABUXHNkAAAAAERMXnhcaH/8XGh//Fxof/hcaH/8AAAAAAAAAAAAAAAAXGh//AAAAABYZHvwXGh//Fxof/xETFp4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGR7yFxoe8RUYHfAVGB3uFRgd7g0OEnUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAAAAABcaH/8XGh//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAP//AAD//wAA//8AAIfhAAB73gAAew4AAGpWAABxjgAAg6EAAPg/AAD7nwAA+/8AAP//AAD//wAA//8AAA==" rel="icon" type="image/x-icon" />
+  </head>
 
 <body id="page-top">
+
 
   <!-- Navigation -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
@@ -50,13 +47,16 @@
       <div class="collapse navbar-collapse" id="navbarResponsive">
         <ul class="navbar-nav ml-auto">
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#revisit">Find a race</a>
+            <a class="nav-link js-scroll-trigger" href="#about">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link js-scroll-trigger" href="#race">Find a race</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#racer">Find a racer</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link js-scroll-trigger" href="#trueskill">About the ratings</a>
+            <a class="nav-link js-scroll-trigger" href="#trueskill">Ratings</a>
           </li>
           <li class="nav-item">
             <a class="nav-link js-scroll-trigger" href="#contact">Contact</a>
@@ -84,91 +84,103 @@
       <p class="lead">Anticipate your results</p>
       <br>
       <br>
-
     </div>
   </header>
 
-  <section id="data" class="bg-light">
+  <section id="about" class="bg-light">
 
 
 
     <div class="container">
       <div class="container text-center col-lg-12">
-        <h2>Place isn't everything</h2>
+        <h2>About this project</h2>
         <p style="font-size: 14pt;">
-          BikeRank uses the <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">
-          TrueSkill™ Ranking System</a>
-          to analyze the results of amateur road cycling races.
+          This is a <b>working draft</b> of a project that will be finalized by <b>December 1, 2020</b>.
+          Until then, please excuse the incomplete dataset and any other shortcomings.
+        </p>
+        <p style="font-size: 14pt;">
+          <b> What is BikeRank? </b><br>
+          BikeRank assigns skill ratings to amateur road cyclists based on their performance in races over time.
           <br>
-          With each new race, BikeRank updates the skill ratings for each racer considering the entire racing history of the field.
+          <b> Why should we rate cyclists? </b><br>
+          These skill ratings will help racers prepare for future races
+           by allowing them to compare their rating with those of the other
+           registrants of an upcoming race.
+          The ratings could also potentially be used to categorize racers by skill level
+          to establish fair but challenging races for equally-matched racers, as an alternative to the existing
+          <a href="https://usacycling.org/about-us/governance/policy-viii#roadupgrades">racing category</a> system.
           <br>
-          Place is just a number - BikeRank reveals each racer's skill.
+          <b> How do other points systems fall short? </b><br>
+          Existing points-based rating systems for road racing, including those from
+          <a href="https://legacy.usacycling.org/news/user/story.php?id=6998">USA Cycling</a>
+          and <a href="https://www.road-results.com/?n=talk&sn=f">BikeReg</a>,
+          do not fully account for each racer's racing history and lack
+          statistical predictions for the outcomes of future races.
+          <br>
+          <b> How does BikeRank assign ratings? </b><br>
+          BikeRank adopts the TrueSkill™ Ranking System,
+          a rating system developed initially for multiplayer online gaming.
+          Every cyclist is assigned an initial skill rating, which is updated based on
+          the outcomes of races occurring over time.
+          The combination of the final placing and previous skill rating for each racer
+          determines the amount by which each racer's rating changes.
+          Learn more about the ratings  <a class="js-scroll-trigger" href="#trueskill">below</a>.
+          <br>
+          <b> How accurate are the ratings? </b><br>
+          To do...
+          <br>
+          <b> Where do the results come from? </b><br>
+          The ratings take into consideration over 2,400,000 results from over 12,000
+          races reported on <a href="https://results.bikereg.com/">BikeReg</a>.
+          The results span the years 2006-2020 and mostly consist of races held in the United States.
+          <br>
+          <div class="container text-center col-lg-12">
+            <img src="https://results.bikereg.com/img/bikeRegLogo.png" class=".mx-auto .d-block" style="height:50px;">
+            <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" class=".mx-auto .d-block" style="height:50px;">
+           </div>
         </p>
       </div>
-      <br>
-      <div class="row text-center">
-        <div class="col">
-        <div class="numberview">
-        <h2 class="timer numberview-title numberview-number">>12,000</h2>
-        <p class="numberview-text ">Races</p>
-      </div>
-      </div>
-      <div class="col">
-        <div class="numberview">
-          <h2 class="timer numberview-title numberview-number">>190,000</h2>
-          <p class="numberview-text ">Racers</p>
-        </div>
-      </div>
-      <div class="col">
-        <div class="numberview">
-          <h2 class="timer numberview-title numberview-number">>24,000,000</h2>
-          <p class="numberview-text ">Results</p>
-        </div>
-      </div>
-     </div>
-     <br>
-     <div class="container text-center col-lg-12">
-       <img src="https://results.bikereg.com/img/bikeRegLogo.png" class=".mx-auto .d-block" style="height:50px;">
-       <img src="https://results.bikereg.com/img/roadresultslogo_notag.png" class=".mx-auto .d-block" style="height:50px;">
-      </div>
-    </div>
-    <br>
-    <div class="container text-center col-lg-12" style="font-size: 14pt;">
-      15 years of race results in the United States from <a href="https://www.road-results.com/">https://www.road-results.com/</a>
-    </div>
 
 
-    <!-- <div class="container">
-      <div class="row">
-        <div class="col-lg-8 mx-auto">
-
-          <ul>
-            <li>> 12,000 races</li>
-            <li>> 190,000 racers</li>
-            <li>> 2.4 million results</li>
-          </ul>
-          <h5 style="text-align: center">1273 races in 2019</h5>
-          <iframe class="map" src="/map" width="800" height="600"></iframe>
-        </div>
-      </div>
-    </div> -->
   </section>
 
 
-    <section id="revisit">
+    <section id="race">
       <div class="container">
         <div class="col-lg-10 mx-auto text-center">
           <h2>Find a race</h2>
-          Enter <a href="https://results.bikereg.com/race/11456">BikeReg race page</a> URL:
-          <form method="POST">
-            <input size="50" type="text" name="race_url" id="race_url" placeholder="https://results.bikereg.com/race/11456">
-            <input type="submit">
-          </form>
+          Enter the name of a race (or find one <a href="https://results.bikereg.com/?n=results&sn=all">here</a>):
+          <div class="container text-center">
+            <form method="POST">
+              {{ race_form.csrf_token }}
+              {{ race_form.name_date(size=70) }}
+              {{ race_form.submit }}
+              <script>
+              $('#name_date').autocomplete({
+                  serviceUrl: '/search/race_name',
+                  dataType: 'json',
+                  lookupLimit: 5,
+                  minChars: 0,
+                  onSearchComplete: function (query, suggestions) {
+                    console.log(query);
+                  }
+              });
+              </script>
+            </form>
+            <form method="POST">
+              {{ category_form.csrf_token }}
+              {{ category_form.category }}
+              {{ category_form.submit }}
+            </form>
+            {{ race_form.errors.get('name_date')[0] if 'name_date' in race_form.errors }}
+          </div>
+
+
           <br>
           <h5 style="text-align: center">
-            {{ df['RaceName'].values[0] }} • May 19, 2019
+            {{ race_table[0]['RaceName'] }} • May 19, 2019
             <br>
-            {{ df['RaceCategoryName'].values[0] }}
+            Category: {{ race_table[0]['RaceCategoryName'] }}
           </h5>
             <div class="table" style="margin-bottom:300px;">
               <table class="table table-bordered table-sm table-hover table-scroll">
@@ -184,15 +196,33 @@
                   </tr>
                 </thead>
                 <tbody>
-                  {% for i, row in df.iterrows() %}
+                  {% for row in race_table %}
                   <tr>
-                    <td style="text-align: center; width: 15%;">{{ row['FirstName'] + ' ' + row['LastName'] }}</td>
+                    <td style="text-align: center; width: 15%;">{{ row['Name'] }}</td>
                     <td style="text-align: center; width: 25%;">{{ row['TeamName'] }}</td>
-                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['PriorPoints']) }}</td>
-                    <td style="text-align: center; width: 10%;">{{ row['PredictedPlace'] }}</td>
-                    <td style="text-align: center; width: 10%;">{{ loop.index }}</td>
-                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(550-row['Points']) }}</td>
-                    <td style="text-align: center; width: 10%;">{{ '%.2f' | format(-row['Points'] + row['PriorPoints']) }}</td>
+                    <td style="text-align: center; width: 10%;">
+                      {% if row['prior_mu'] is not none %}
+                        {{ '%.2f, %.2f' | format(row['prior_mu'], row['prior_sigma']) }}
+                      {% else %}
+                        NONE
+                      {% endif %}
+                    </td>
+                    <td style="text-align: center; width: 10%;">{{ row['predicted_place'] }}</td>
+                    <td style="text-align: center; width: 10%;">{{ row['Place'] }}</td>
+                    <td style="text-align: center; width: 10%;">
+                      {% if row['new_mu'] is not none %}
+                        {{ '%.2f, %.2f' | format(row['new_mu'], row['new_sigma']) }}
+                      {% else %}
+                        NONE
+                      {% endif %}
+                    </td>
+                    <td style="text-align: center; width: 10%;">
+                      {% if row['prior_mu'] is not none %}
+                        {{ '%.2f, %.2f' | format(row['new_mu'] - row['prior_mu'], row['new_sigma'] - row['prior_sigma']) }}
+                      {% else %}
+                        NONE
+                      {% endif %}
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -207,17 +237,31 @@
       <div class="row">
         <div class="col-lg-10 mx-auto text-center">
           <h2>Find a racer</h2>
-          Enter <a href="https://results.bikereg.com/race/11456">BikeReg racer page</a> URL:
+          Enter the name of a racer (or find one <a href="https://results.bikereg.com/?n=racers&sn=find">here</a>).
 
-          <form method="POST">
-            <input size="50" type="text" name="racer_url" id="racer_url" placeholder="https://results.bikereg.com/racer/177974">
-            <input type="submit">
-          </form>
+          <div class="container text-center">
+            <form method="POST">
+              {{ racer_form.csrf_token }}
+              {{ racer_form.racer_name(size=70) }}
+              {{ racer_form.submit }}
+              <script>
+              $('#racer_name').autocomplete({
+                  serviceUrl: '/search/racer_name',
+                  dataType: 'json',
+                  lookupLimit: 5,
+                  minChars: 0,
+                  onSearchComplete: function (query, suggestions) {
+                    console.log(query);
+                  }
+              });
+              </script>
+            </form>
+            {{ racer_form.errors.get('racer_name')[0] if 'racer_name' in racer_form.errors }}
         </div>
       </div>
       <div class="container">
         <div class="col-lg-10 mx-auto">
-          <h5 style="text-align: center"><br>Race history for {{ df_racer['FirstName'][0] + ' ' + df_racer['LastName'][0] }}:</h5>
+          <h5 style="text-align: center"><br>Race history for {{ racer_name }}:</h5>
           <div class="table-responsive" style="margin-bottom:400px;">
             <table class="table table-bordered table-sm table-hover table-scroll">
               <thead class="thead-dark">
@@ -230,13 +274,13 @@
                 </tr>
               </thead>
               <tbody>
-                {% for i, row in df_racer[::-1].iterrows() %}
+                {% for row in racer_table %}
                 <tr>
                   <th style="text-align: center; width: 10%;" scope="row">{{ loop.index }}</th>
-                  <th style="text-align: center; width: 20%;" scope="row">{{ row['RaceDate'].strftime('%B %d, %Y') }}</th>
+                  <th style="text-align: center; width: 20%;" scope="row">{{ row['date'].strftime('%B %d, %Y') }}</th>
                   <td style="width: 30%;">{{ row['RaceName'] }}</td>
                   <td style="width: 20%;">{{ row['RaceCategoryName'] }}</td>
-                  <td style="text-align: center; width: 10%;">{{ row['Place'] }}</td>
+                  <td style="text-align: center; width: 10%;">{{ row['Place'] }} / {{ row['num_racers'] }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -248,51 +292,6 @@
           <div id='racer-plot'></div>
         </div>
       </div>
-
-      <!-- <select>
-        {% for item in race_list %}
-          <option value="{{item}}">{{item}}</option>
-        {% endfor %}
-      </select> -->
-
-
-      <!-- <form action='select_race' method="POST">
-        {{ form.hidden_tag() }}
-        <div style="width: 220px">
-          {{ form.name }}
-        </div>
-        <button>Submit</button>
-      </form> -->
-
-      <!-- <script>
-      $(document).ready(function() {
-          $('#name').select2({  // init Select2 on form's name field
-              placeholder: "{{ form.name.label.text }}",
-              allowClear: true,
-              "width": "style"
-          });
-      });
-      </script> -->
-
-      <!-- <div class="container text-center">
-      <h2> Enter race name: </h2>
-        <form method="POST">
-          <input type="text" name="race_name" id="autocomplete1" placeholder="Bucknell Cycling Classic">
-          <input type="submit">
-
-          <script>
-          $('#autocomplete1').autocomplete({
-              serviceUrl: '/search/race_name',
-              dataType: 'json',
-              lookupLimit: 10,
-              minChars: 1,
-              onSearchComplete: function (query, suggestions) {
-                console.log(query);
-              }
-          });
-          </script>
-        </form>
-      </div> -->
     </div>
   </section>
 
@@ -368,6 +367,7 @@
       <div class="row">
         <div class="col-lg-8 text-center mx-auto">
           <h2>Contact the author</h2>
+        </div>
           <div class="container text-center">
 
             <p class="lead">This website was created by Brian Schaefer for
@@ -379,7 +379,6 @@
               <a href="https://github.com/physinet/road-results" class="github"><i class="bx bxl-github"></i></a>
               <a href="https://www.linkedin.com/in/brian-schaefer-999683190/" class="linkedin"><i class="bx bxl-linkedin"></i></a>
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -399,7 +398,9 @@
   <script>
         var spec = {{ chart | safe }};
         vegaEmbed("#racer-plot", spec);
-   </script>
+  </script>
+
+
 </body>
 
 </html>
