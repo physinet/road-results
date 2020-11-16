@@ -153,7 +153,7 @@
           <div class="container text-center">
             <form method="POST">
               {{ race_form.csrf_token }}
-              {{ race_form.name_date(size=70) }}
+              {{ race_form.name_date(size=80) }}
               {{ race_form.submit }}
               <script>
               $('#name_date').autocomplete({
@@ -242,7 +242,7 @@
           <div class="container text-center">
             <form method="POST">
               {{ racer_form.csrf_token }}
-              {{ racer_form.racer_name(size=70) }}
+              {{ racer_form.racer_name(size=30) }}
               {{ racer_form.submit }}
               <script>
               $('#racer_name').autocomplete({
