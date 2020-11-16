@@ -13,8 +13,9 @@ class Config(object):
 
 class ProductionConfig(Config):
     DEBUG = False
-
+    DB_WRITE_ACCESS = False
 
 class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
+    DB_WRITE_ACCESS = True

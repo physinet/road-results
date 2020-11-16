@@ -134,30 +134,26 @@ def race_suggestions(box):
     return jsonify({"suggestions": suggestions[:5]})
 
 
-@app.route('/map')
-def create_map():
-    return render_template('map.html')
-
-
 @app.route('/database')
 def preview_database(methods=['GET', 'POST']):
-    if request.args.get('drop'):
-        commands.db_drop_all()
-        commands.db_create_all()
+    if app.config.get('DB_WRITE_ACCESS'):
+        if request.args.get('drop'):
+            commands.db_drop_all()
+            commands.db_create_all()
 
-    if request.args.get('add'):
-        if Results.query.count() > 0:
-            raise Exception('Rows exist in Results table. Can\'t add!')
-        df = pd.read_pickle('C:/data/results/df.pkl')
-        model.Races.add_from_df(df)
-        model.add_table_results()
-        model.filter_races()
+        if request.args.get('add'):
+            if Results.query.count() > 0:
+                raise Exception('Rows exist in Results table. Can\'t add!')
+            df = pd.read_pickle('C:/data/results/df.pkl')
+            model.Races.add_from_df(df)
+            model.add_table_results()
+            model.filter_races()
 
-    if request.args.get('rate'):
-        model.get_all_ratings()
+        if request.args.get('rate'):
+            model.get_all_ratings()
 
-    if request.args.get('filter'):
-        model.filter_races()
+        if request.args.get('filter'):
+            model.filter_races()
 
     if request.args.get('table'):
         Table = eval(request.args.get('table'))
@@ -175,43 +171,6 @@ def preview_database(methods=['GET', 'POST']):
     return render_template('database.html', cols=cols,
                            data=[q.__dict__ for q in queries])
 
-
-@app.route('/race')
-def display_single_race(methods=['GET', 'POST']):
-    race_id = request.args.get('id')
-    if not race_id:
-        race_id = 10000
-    race_id = int(race_id)
-
-    category_idx = request.args.get('cat')  # an index for which category
-    if not category_idx:
-        category_idx = 0
-    category_idx = int(category_idx)
-
-    categories = Races.get_categories(race_id)
-    if category_idx >= len(categories):
-        category_idx = 0
-
-    race_table = Results.get_race_table(race_id, categories[category_idx])
-
-    cols = Results.__table__.columns.keys()
-
-    return render_template('database.html', cols=cols,
-                            data=[q.__dict__ for q in race_table])
-
-@app.route('/racer')
-def display_single_racer(methods=['GET', 'POST']):
-    if 'id' in request.args:
-        racer_id = int(request.args.get('id'))
-    else:
-        racer_id = RACER_ID
-
-    racer_table = Results.get_racer_results(racer_id)
-
-    cols = Results.__table__.columns.keys()
-
-    return render_template('database.html', cols=cols,
-                            data=[q.__dict__ for q in racer_table])
 
 @app.after_request
 def add_header(r):
