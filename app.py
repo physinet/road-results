@@ -1,20 +1,14 @@
-import dill
 import os
-import glob
 
-from flask import Flask, render_template, request, jsonify, redirect
-from flask_wtf import FlaskForm
+from flask import Flask, render_template, request, jsonify
 from flask_wtf.csrf import CSRFProtect
-from wtforms import SelectField, SubmitField, StringField, validators
-from wtforms.validators import AnyOf
-import pandas as pd
-
 
 import commands
 import database
-import model
 import scraping
+import model
 from model import Results, Races, Racers
+from forms import RaceForm, CategoryForm, RacerForm
 
 from preprocess import clean
 
@@ -26,36 +20,6 @@ CATEGORY_NAME = 'Men Collegiate CAT A'
 RACER_ID = 9915  #177974
 SCROLL = ''
 
-
-class RaceForm(FlaskForm):
-    name_date = StringField('name_date', id='name_date',
-                 filters=[lambda x: x or Races.get_race_name_date(RACE_ID)])
-            # Filter to transform empty string into the currently selected race
-    submit = SubmitField('Show me this race!', id='race_name_submit')
-
-    def __init__(self, race_names, *args, **kwargs):
-        super(RaceForm, self).__init__(*args, **kwargs)
-        msg = f'Can\'t find a race by the name {self.name_date.data}!\n'
-        self.name_date.validators = [AnyOf(race_names, message=msg)]
-
-class CategoryForm(FlaskForm):
-    category = SelectField('Category', id='category')
-    submit = SubmitField('Show me this category!', id='category_submit')
-
-    def __init__(self, categories, *args, **kwargs):
-        super(CategoryForm, self).__init__(*args, **kwargs)
-        self.category.choices = categories
-
-class RacerForm(FlaskForm):
-    racer_name = StringField('racer_name', id='racer_name',
-                 filters=[lambda x: x or Racers.get_racer_name(RACER_ID)])
-            # Filter to transform empty string into the currently selected racer
-    submit = SubmitField('Show me this racer!', id='racer_name_submit')
-
-    def __init__(self, racer_names, *args, **kwargs):
-        super(RacerForm, self).__init__(*args, **kwargs)
-        msg = f'Can\'t find a racer by the name {self.racer_name.data}!\n'
-        self.racer_name.validators = [AnyOf(racer_names, message=msg)]
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
@@ -75,7 +39,7 @@ def index_post():
     racer_name = request.form.get('racer_name')
 
     # Race form - update RACE_ID if valid name_date submitted
-    race_form = RaceForm(Races.get_race_names())
+    race_form = RaceForm(RACE_ID)
     if race_form.validate_on_submit() and name_date:
         RACE_ID = Races.get_race_id(name_date)
 
@@ -88,7 +52,7 @@ def index_post():
         CATEGORY_NAME = categories[0]
 
     # Racer form - update RACER_ID if valid racer name submitted
-    racer_form = RacerForm(Racers.get_racer_names())
+    racer_form = RacerForm(RACER_ID)
     if racer_form.validate_on_submit() and racer_name:
         RACER_ID = Racers.get_racer_id(racer_name)
 
@@ -99,10 +63,8 @@ def index_post():
         SCROLL = 'racer'
 
     # Reset data in form fields to show placeholder text again
-    race_form.name_date.description = Races.get_race_name_date(RACE_ID)
-    race_form.name_date.data = ''
-    racer_form.racer_name.description = Racers.get_racer_name(RACER_ID)
-    racer_form.racer_name.data = ''
+    race_form.reset_placeholder(RACE_ID)
+    racer_form.reset_placeholder(RACER_ID)
 
     race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
     racer_table = model.get_racer_table(RACER_ID)

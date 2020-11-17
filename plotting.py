@@ -11,7 +11,6 @@ def make_racer_plot_alt(racer_table):
     """Plot each racer's rating over time using altair"""
 
     df = pd.DataFrame.from_records(racer_table, exclude=['_sa_instance_state'])
-    print(df)
     df['date'] = df['date'].dt.strftime('%m/%d/%y')
     df['Place'] = df['Place'].astype(str) + ' / ' + df['num_racers'].astype(str)
 
