@@ -15,7 +15,8 @@ import ratings
 class Model:
     def __init__(self, **entries):
         """Custom init to ignore keyword arguments not in the table schema."""
-        self.__dict__.update(entries)
+        d = {col.name: entries.get(col.name) for col in self.__table__.columns}
+        self.__dict__.update(d)
 
 
     @classmethod
@@ -24,7 +25,9 @@ class Model:
         with keys matching the column names for the table.
         """
         # Filter out empty dictionaries
-        db.session.add_all([cls(**row) for row in filter(lambda x: x, rows)])
+        objs = [cls(**row) if isinstance(row, dict) else cls(**row.__dict__)
+                for row in filter(lambda x: x, rows)]
+        db.session.add_all(objs)
         db.session.commit()
 
 
@@ -99,33 +102,25 @@ class Racers(Model, db.Model):
     Name = db.Column(db.String)
     Age = db.Column(db.String)
     Category = db.Column(db.Integer)
-    mu = db.Column(db.Float)
-    sigma = db.Column(db.Float)
-    num_races = db.Column(db.Integer)
+    mu = db.Column(db.Float, default=ratings.env.mu)
+    new_mu = synonym('mu')
+    sigma = db.Column(db.Float, default=ratings.env.sigma)
+    new_sigma = synonym('sigma')
+    num_races = db.Column(db.Integer, default=1)
     _racer_names = None
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
 
-
     @classmethod
-    def add_new_racers(cls, results):
-        """Given a query consisting of rows from the Results table, adds
-           racers to the Racers table that do not already exist in Racers"""
-        new_racers = results.join(Racers,
-                                  Results.RacerID == Racers.RacerID,
-                                  isouter=True) \
-                            .filter(Racers.RacerID == None) \
-                            .all()
-        for new_racer in new_racers:
-            racer = Racers(RacerID=new_racer.RacerID,
-                           Name=new_racer.Name,
-                           Age=new_racer.Age,
-                           Category=new_racer.Category,
-                           mu=ratings.env.mu,
-                           sigma=ratings.env.sigma,
-                           num_races=1)
-            db.session.merge(racer)
+    def add(cls, results):
+        """Add rows to the table from results rows. Will only attempt to add
+        rows with new RacerIDs not already in the table.
+        """
+        new = results.filter(Results.RacerID.notin_(
+                                Racers.query.with_entities(Racers.RacerID)
+                            ))
+        super().add(new)
 
     @classmethod
     def get_racer_id(cls, name):
@@ -157,10 +152,10 @@ class Racers(Model, db.Model):
         return list(cls._get_racer_names().keys())
 
     @classmethod
-    def update(cls, results):
+    def update(cls, rows):
         """Update Racers table from list of rows from Results table."""
-        mappings = [{'RacerID': r.RacerID, 'mu': r.new_mu, 'sigma': r.new_sigma}
-                    for r in results]
+        mappings = [row if isinstance(row, dict) else row.__dict__
+                    for row in filter(lambda x: x, rows)]
         db.session.bulk_update_mappings(cls, mappings)
         db.session.flush()
         db.session.commit()
@@ -188,6 +183,31 @@ class Results(Model, db.Model):
     def __repr__(self):
         return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"
 
+    @classmethod
+    def add_local(cls, id_range=(0,13000)):
+        """Add to the Results table from locally saved pickled json files.
+        id_range sets the range of race_ids we should load into the database.
+        """
+        files = glob.iglob(os.path.join(
+            'C:\\', 'data', 'results', 'races', '*.pkd'))
+
+        id_min, id_max = id_range
+
+        print('Building database!')
+        for f in files:
+            race_id = int(os.path.split(f)[-1].split('.')[0])  # extract race_id
+            if race_id < id_min or race_id > id_max:
+                continue
+            print(race_id)
+
+            import json
+            rows = json.loads(dill.load(open(f, 'rb')))
+            [row.update({'race_id': race_id}) for row in rows]
+
+            rows = clean(rows)
+            # Add results directly from file without updating ratings
+            cls.add(rows)
+
 
     @classmethod
     def get_race_table(cls, race_id, RaceCategoryName):
@@ -196,7 +216,6 @@ class Results(Model, db.Model):
         return cls.query \
                   .filter(cls.race_id == race_id,
                           cls.RaceCategoryName == RaceCategoryName,
-                          # cls.Place != None
                           ) \
                   .order_by(cls.index)
 
@@ -232,31 +251,6 @@ def add_categories():
     Races.update([c._asdict() for c in collected])
 
 
-def add_table_results(id_range=(0,13000)):
-    """Add to the Results table from locally saved pickled json files.
-    id_range sets the range of race_ids we should load into the database.
-    """
-    files = glob.iglob(os.path.join(
-        'C:\\', 'data', 'results', 'races', '*.pkd'))
-
-    id_min, id_max = id_range
-
-    print('Building database!')
-    for f in files:
-        race_id = int(os.path.split(f)[-1].split('.')[0])  # extract race_id
-        if race_id < id_min or race_id > id_max:
-            continue
-        print(race_id)
-
-        import json
-        rows = json.loads(dill.load(open(f, 'rb')))
-        [row.update({'race_id': race_id}) for row in rows]
-
-        rows = clean(rows)
-        # Add results directly from file without updating ratings
-        Results.add(rows)
-
-
 def filter_races():
     """Drop rows from the races table that correspond to races NOT represented
        in the Results table - these are not in the database yet"""
@@ -266,7 +260,7 @@ def filter_races():
     db.session.commit()
 
 def get_all_ratings():
-    """Get all ratings from using results in the Results table"""
+    """Get all ratings for results in the Results table"""
     results_to_rate = Results.query.filter(Results.Place != None)  # drop DNFs
     places = results_to_rate.join(Races, Races.race_id == Results.race_id) \
                             .with_entities(Results.race_id,
@@ -289,7 +283,7 @@ def get_all_ratings():
                                .filter(Results.RacerID.in_(racer_id_list))
 
         # Update Racers table with new racers (and give them default ratings)
-        Racers.add_new_racers(results)
+        Racers.add(results)
 
         # Join the Results and Racers tables to get prior ratings
         # cte() essentially makes results a subquery like "WITH ... AS ..."

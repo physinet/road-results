@@ -92,8 +92,8 @@
 
 
     <div class="container">
-      <div class="container text-center col-lg-12">
-        <h2>About this project</h2>
+      <div class="container col-lg-8">
+        <h2 class="text-center">About this project</h2>
         <p style="font-size: 14pt;">
           This is a <b>working draft</b> of a project that will be finalized by <b>December 1, 2020</b>.
           Until then, please excuse the incomplete dataset and any other shortcomings.
@@ -101,6 +101,7 @@
         <p style="font-size: 14pt;">
           <b> What is BikeRank? </b><br>
           BikeRank assigns skill ratings to amateur road cyclists based on their performance in races over time.
+          <br>
           <br>
           <b> Why should we rate cyclists? </b><br>
           These skill ratings will help racers prepare for future races
@@ -110,12 +111,14 @@
           to establish fair but challenging races for equally-matched racers, as an alternative to the existing
           <a href="https://usacycling.org/about-us/governance/policy-viii#roadupgrades">racing category</a> system.
           <br>
+          <br>
           <b> How do other points systems fall short? </b><br>
           Existing points-based rating systems for road racing, including those from
           <a href="https://legacy.usacycling.org/news/user/story.php?id=6998">USA Cycling</a>
           and <a href="https://www.road-results.com/?n=talk&sn=f">BikeReg</a>,
           do not fully account for each racer's racing history and lack
           statistical predictions for the outcomes of future races.
+          <br>
           <br>
           <b> How does BikeRank assign ratings? </b><br>
           BikeRank adopts the TrueSkill™ Ranking System,
@@ -126,8 +129,10 @@
           determines the amount by which each racer's rating changes.
           Learn more about the ratings  <a class="js-scroll-trigger" href="#trueskill">below</a>.
           <br>
+          <br>
           <b> How accurate are the ratings? </b><br>
           To do...
+          <br>
           <br>
           <b> Where do the results come from? </b><br>
           The ratings take into consideration over 2,400,000 results from over 12,000
@@ -149,7 +154,7 @@
       <div class="container">
         <div class="col-lg-10 mx-auto text-center">
           <h2>Find a race</h2>
-          Enter the name of a race (or find one <a href="https://results.bikereg.com/?n=results&sn=all">here</a>):
+          Looking for a suggestion? Try searching for ".........." (or find one <a href="https://results.bikereg.com/?n=results&sn=all">here</a>).
           <div class="container text-center">
             <form method="POST">
               {{ race_form.csrf_token }}
@@ -208,19 +213,19 @@
                       {% endif %}
                     </td>
                     <td style="text-align: center; width: 10%;">{{ row['predicted_place'] }}</td>
-                    <td style="text-align: center; width: 10%;">{{ row['Place'] }}</td>
+                    <td style="text-align: center; width: 10%;">{{ row['Place'] | default('DNF', True) }}</td>
                     <td style="text-align: center; width: 10%;">
                       {% if row['new_mu'] is not none %}
                         {{ '%.2f, %.2f' | format(row['new_mu'], row['new_sigma']) }}
                       {% else %}
-                        NONE
+                        -
                       {% endif %}
                     </td>
                     <td style="text-align: center; width: 10%;">
                       {% if row['prior_mu'] is not none %}
                         {{ '%.2f, %.2f' | format(row['new_mu'] - row['prior_mu'], row['new_sigma'] - row['prior_sigma']) }}
                       {% else %}
-                        NONE
+                        -
                       {% endif %}
                     </td>
                   </tr>
@@ -229,6 +234,8 @@
               </table>
           </div>
         </div>
+        DNF = "Did Not Finish"
+
       </div>
     </section>
 

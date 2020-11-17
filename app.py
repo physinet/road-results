@@ -112,8 +112,7 @@ def preview_database(methods=['GET', 'POST']):
             rows = scraping.scrape_race_pages(race_ids)
             print('Committing scraped race pages to database...')
             Races.add(rows)
-
-            model.add_table_results(id_range=(10000,10010))
+            Results.add_local(id_range=(10000, 10010))
             model.add_categories()
             model.filter_races()
 
