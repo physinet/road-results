@@ -10,12 +10,13 @@ from database import db
 
 from preprocess import clean
 import ratings
+import scraping
 
 
 class Model:
     def __init__(self, **entries):
         """Custom init to ignore keyword arguments not in the table schema."""
-        d = {col.name: entries.get(col.name) for col in self.__table__.columns}
+        d = {col: entries.get(col) for col in self.get_columns()}
         self.__dict__.update(d)
 
 
@@ -31,6 +32,18 @@ class Model:
         db.session.commit()
 
     @classmethod
+    def get_columns(cls):
+        """Get the column names for the table.
+        """
+        return list(cls.__table__.columns.keys())
+
+    @classmethod
+    def get_sample(cls, limit):
+        """Get the first `limit` rows of the table.
+        """
+        return cls.query.order_by(cls.index).limit(limit)
+
+    @classmethod
     def update(cls, rows):
         """Update table from list of rows, which may be from other tables.
         Only attributes of each row matching column names in the table
@@ -40,7 +53,7 @@ class Model:
         if not isinstance(rows[0], dict):
             rows = map(lambda x: x.__dict__, filter(lambda x: x, rows))
 
-        cols = {col.name for col in cls.__table__.columns}
+        cols = {col for col in cls.get_columns()}
 
         # only map attributes that are named columns in this table
         mappings = [{col: row.get(col) for col in (cols & row.keys())}
@@ -251,16 +264,36 @@ def add_categories():
     Races.update([c._asdict() for c in collected])
 
 
+def add_tables():
+    """Add data to the Races and Results tables. First scrapes metadata for the
+    Races table, then uses the json_url for each row to collect results from
+    the JSON files available at those urls.
+    """
+    if Results.query.count() > 0:
+        raise Exception('Rows exist in Results table. Can\'t add!')
+
+    race_ids = list(range(10000, 10011))
+    rows = scraping.scrape_race_pages(race_ids)
+    print('Committing scraped race pages to database...')
+    Races.add(rows)
+    print('Adding results from locally saved JSON files...')
+    Results.add_local(id_range=(10000, 10010))
+    print('Populating categories...')
+    add_categories()
+    print('Removing races not in the Results table...')
+    filter_races()
+
 def filter_races():
     """Drop rows from the races table that correspond to races NOT represented
-       in the Results table - these are not in the database yet"""
+    in the Results table - these are not in the database yet.
+    """
     races = Results.query.with_entities(Results.race_id).distinct().all()
     races = [race for race, in races]
     Races.query.filter(~Races.race_id.in_(races)).delete('fetch')
     db.session.commit()
 
 def get_all_ratings():
-    """Get all ratings for results in the Results table"""
+    """Get all ratings for results in the Results table."""
 
     results_groups = (
         Results.query
