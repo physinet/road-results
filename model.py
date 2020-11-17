@@ -82,16 +82,14 @@ class Races(Model, db.Model):
         """Return a list of the names of all races"""
         return list(cls._get_race_names().keys())
 
-
     @classmethod
-    def update_at_id(cls, race_id, attribs):
-        """Update attributes to the table at the given race_id. For example,
-           if we want to update the list of categories, then attribs is a
-           dictionary like: {'categories': ['Cat 1', 'Cat 2', 'Cat 3']}"""
-        # there should only be one row
-        row = cls.query.filter(cls.race_id == race_id).one()
-        for attrib, val in attribs.items():
-            setattr(row, attrib, val)
+    def update(cls, rows):
+        """Update Races table from a list of dictionaries of attributes.
+        Each dictionary must include the race_id primary key."""
+        # Explicitly extract race_id
+        mappings = [{'race_id': row['race_id'], **row} for row in rows]
+        db.session.bulk_update_mappings(cls, mappings)
+        db.session.flush()
         db.session.commit()
 
 
@@ -159,7 +157,7 @@ class Racers(Model, db.Model):
         return list(cls._get_racer_names().keys())
 
     @classmethod
-    def update_ratings(cls, results):
+    def update(cls, results):
         """Update Racers table from list of rows from Results table."""
         mappings = [{'RacerID': r.RacerID, 'mu': r.new_mu, 'sigma': r.new_sigma}
                     for r in results]
@@ -215,32 +213,23 @@ def add_categories():
     """Update the Races table with the categories represented in the
     Results table.
     """
-    # (Race ID, category name, number of racers in that category)
+    # results of query are (arbitrary ResultID (so we can order), Race ID,
+    # category name, number of racers in that category)
     cat_counts = (Results.query
                          .with_entities(
                             Results.race_id,
                             Results.RaceCategoryName,
-                            func.count(Results.RaceCategoryName).label('count')
-                        ).group_by(Results.race_id, Results.RaceCategoryName)
-                         .all()
-                        )
-    # collected = cat_counts.query.with_entities(cat_counts.c.count).all()
-    # print(collected)
-
-    # REDO USING SQLALCHEMY
-    race_ids = set()
-    for cc in cat_counts:
-        race_ids.add(cc[0])
-    for race_id in race_ids:
-        categories = []
-        num_racers = []
-        for cc in cat_counts:
-            if race_id == cc[0]:
-                categories.append(cc[1])
-                num_racers.append(cc[2])
-
-        Races.update_at_id(race_id, {'categories': categories,
-                                     'num_racers': num_racers})
+                            func.count(Results.RaceCategoryName).label('count'))
+                         .group_by(Results.race_id,
+                                   Results.RaceCategoryName)
+                         .order_by(Results.RaceCategoryName)
+                         .subquery('cat_counts'))
+    collected = (db.session
+                   .query(cat_counts.c.race_id,
+                          func.array_agg(cat_counts.c.RaceCategoryName).label('categories'),
+                          func.array_agg(cat_counts.c.count).label('num_racers'))
+                   .group_by(cat_counts.c.race_id))
+    Races.update([c._asdict() for c in collected])
 
 
 def add_table_results(id_range=(0,13000)):
@@ -327,7 +316,7 @@ def get_all_ratings():
         ratings.get_predicted_places(results)
 
         # Update the racers table with the new ratings
-        Racers.update_ratings(results)
+        Racers.update(results)
 
 def get_racer_table(racer_id):
     """Returns a list of dictionaries of results for the given racer id.
