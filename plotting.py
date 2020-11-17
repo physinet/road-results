@@ -17,13 +17,13 @@ def make_racer_plot_alt(racer_table):
     # Add row for "zeroth" race - initial rating
     df.loc[len(df)] = 0  # row at the end
     df = df.shift().fillna('')  # shift to reveal NaN row at beginning
-    df.loc[0, 'new_mu'] = df.loc[1, 'prior_mu']
-    df.loc[0, 'new_sigma'] = df.loc[1, 'prior_sigma']
+    df.loc[0, 'mu'] = df.loc[1, 'prior_mu']
+    df.loc[0, 'sigma'] = df.loc[1, 'prior_sigma']
     df.loc[0, 'RaceName'] = 'Initial Rating'
     df.loc[0, 'Place'] = 'n/a'
 
-    df['mu+sigma'] = df['new_mu'] + df['new_sigma']
-    df['mu-sigma'] = df['new_mu'] - df['new_sigma']
+    df['mu+sigma'] = df['mu'] + df['sigma']
+    df['mu-sigma'] = df['mu'] - df['sigma']
 
 
     df = df.reset_index()  # Replace "index" column with index of df
@@ -31,7 +31,7 @@ def make_racer_plot_alt(racer_table):
     mu = alt.Chart(df).encode(
         x=alt.X('index', title='Race number',
                 axis=alt.Axis(tickMinStep=1, grid=False)),
-        y=alt.Y('new_mu', title='Rating', axis=alt.Axis(grid=False)),
+        y=alt.Y('mu', title='Rating', axis=alt.Axis(grid=False)),
         tooltip=['RaceName', 'Place']
     )
 

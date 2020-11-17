@@ -19,7 +19,7 @@ Details to be added...
 The relevant data for this project are stored in a PostgreSQL database hosted on [AWS](https://aws.amazon.com/rds/) with three tables:
 - `Races`: Each row corresponds to one race event identified by a unique `race_id`. This table stores the relevant metadata for each race, including its name, date, location, list of race categories, and the number of racers competing in each category.
 - `Racers`: Each row corresponds to one racer identified by a unique `RacerID`. This table primarily stores the racer's name and current skill rating (parameterized by a mean skill rating `mu` and uncertainty `sigma`). The ratings in this table are updated upon processing each additional race.
-- `Results`: Each row corresponds to one result: the finishing place for one racer in one category of one race, along with the corresponding ID numbers for each. This table also records the skill rating of each racer both prior to (`prior_mu`, `prior_sigma`) and as a result of (`new_mu`, `new_sigma`) the race outcome.
+- `Results`: Each row corresponds to one result: the finishing place for one racer in one category of one race, along with the corresponding ID numbers for each. This table also records the skill rating of each racer both prior to (`prior_mu`, `prior_sigma`) and as a result of (`mu`, `sigma`) the race outcome.
 
 In `model.py`, I represent the tables using [SQLAlchemy](https://docs.sqlalchemy.org/en/13/orm/tutorial.html) classes. Each class has its own helper functions to query the database,
 and there are additional functions defined in `model.py` to apply the rating system

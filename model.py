@@ -30,6 +30,26 @@ class Model:
         db.session.add_all(objs)
         db.session.commit()
 
+    @classmethod
+    def update(cls, rows):
+        """Update table from list of rows, which may be from other tables.
+        Only attributes of each row matching column names in the table
+        will be considered.
+        """
+        # Filter empty rows and take dictionary if each row is an object
+        if not isinstance(rows[0], dict):
+            rows = map(lambda x: x.__dict__, filter(lambda x: x, rows))
+
+        cols = {col.name for col in cls.__table__.columns}
+
+        # only map attributes that are named columns in this table
+        mappings = [{col: row.get(col) for col in (cols & row.keys())}
+                     for row in rows]
+
+        db.session.bulk_update_mappings(cls, mappings)
+        db.session.flush()
+        db.session.commit()
+
 
 class Races(Model, db.Model):
     race_id = db.Column(db.Integer, primary_key=True)
@@ -85,16 +105,6 @@ class Races(Model, db.Model):
         """Return a list of the names of all races"""
         return list(cls._get_race_names().keys())
 
-    @classmethod
-    def update(cls, rows):
-        """Update Races table from a list of dictionaries of attributes.
-        Each dictionary must include the race_id primary key."""
-        # Explicitly extract race_id
-        mappings = [{'race_id': row['race_id'], **row} for row in rows]
-        db.session.bulk_update_mappings(cls, mappings)
-        db.session.flush()
-        db.session.commit()
-
 
 class Racers(Model, db.Model):
     RacerID = db.Column(db.Integer, primary_key=True)
@@ -103,9 +113,7 @@ class Racers(Model, db.Model):
     Age = db.Column(db.String)
     Category = db.Column(db.Integer)
     mu = db.Column(db.Float, default=ratings.env.mu)
-    new_mu = synonym('mu')
     sigma = db.Column(db.Float, default=ratings.env.sigma)
-    new_sigma = synonym('sigma')
     num_races = db.Column(db.Integer, default=1)
     _racer_names = None
 
@@ -151,15 +159,6 @@ class Racers(Model, db.Model):
         """Returns a list of the names of all racers"""
         return list(cls._get_racer_names().keys())
 
-    @classmethod
-    def update(cls, rows):
-        """Update Racers table from list of rows from Results table."""
-        mappings = [row if isinstance(row, dict) else row.__dict__
-                    for row in filter(lambda x: x, rows)]
-        db.session.bulk_update_mappings(cls, mappings)
-        db.session.flush()
-        db.session.commit()
-
 
 class Results(Model, db.Model):
     ResultID = db.Column(db.Integer, primary_key=True)
@@ -174,10 +173,10 @@ class Results(Model, db.Model):
     RaceName = db.Column(db.String)
     RaceCategoryName = db.Column(db.String)
     race_id = db.Column(db.Integer)
-    prior_mu = db.Column(db.Float)
-    prior_sigma = db.Column(db.Float)
-    new_mu = db.Column(db.Float)
-    new_sigma = db.Column(db.Float)
+    prior_mu = db.Column(db.Float, default=ratings.env.mu)
+    prior_sigma = db.Column(db.Float, default=ratings.env.sigma)
+    mu = db.Column(db.Float)
+    sigma = db.Column(db.Float)
     predicted_place = db.Column(db.Integer)
 
     def __repr__(self):
@@ -228,6 +227,7 @@ class Results(Model, db.Model):
                   .order_by(cls.index)
 
 
+
 def add_categories():
     """Update the Races table with the categories represented in the
     Results table.
@@ -261,26 +261,29 @@ def filter_races():
 
 def get_all_ratings():
     """Get all ratings for results in the Results table"""
-    results_to_rate = Results.query.filter(Results.Place != None)  # drop DNFs
-    places = results_to_rate.join(Races, Races.race_id == Results.race_id) \
-                            .with_entities(Results.race_id,
-                                           Results.RaceCategoryName,
-                                           Races.date,
-                                           func.array_agg(Results.RacerID)
-                                               .label('racer_id')) \
-                            .group_by(Results.race_id,
-                                      Results.RaceCategoryName,
-                                      Races.date) \
-                            .order_by(Races.date) \
 
+    results_groups = (
+        Results.query
+               .join(Races, Races.race_id == Results.race_id)
+               .with_entities(Results.race_id,
+                              Results.RaceCategoryName,
+                              Races.date,
+                              func.array_agg(Results.RacerID).label('id_list'))
+               .group_by(Results.race_id,
+                         Results.RaceCategoryName,
+                         Races.date)
+               .order_by(Races.date)
+    )
 
-
-    for race_id, category, date, racer_id_list in places:
+    for race_id, category, date, racer_id_list in results_groups:
         print(f'Rating race {race_id} category {category} date {date}')
         # Get a table with the relevant results we want to rate
         results = Results.query.filter(Results.race_id == race_id) \
                                .filter(Results.RaceCategoryName == category) \
                                .filter(Results.RacerID.in_(racer_id_list))
+
+        if results.count() == 1:  # don't rate uncontested races
+            continue
 
         # Update Racers table with new racers (and give them default ratings)
         Racers.add(results)
@@ -291,26 +294,31 @@ def get_all_ratings():
         results_racers = \
             db.session \
               .query(results_cte, Racers.mu, Racers.sigma) \
-              .join(Racers, results_cte.c.RacerID == Racers.RacerID) \
-              .all()
+              .join(Racers, results_cte.c.RacerID == Racers.RacerID)
 
-        results = results.all()
-        assert len(results_racers) == len(results), \
+        assert results_racers.count() == results.count(), \
                'Some racers missing from either Results or Racers table!'
-        if len(results) == 1:  # don't rate uncontested races
-            continue
+
 
         # Store prior ratings in Results table
         for result, result_racers in zip(results, results_racers):
             result.prior_mu = result_racers.mu
             result.prior_sigma = result_racers.sigma
+            # Also record the prior ratings in the "current" ratings columns
+            # run_trueskill will update these for every placing racer
+            result.mu = result_racers.mu
+            result.sigma = result_racers.sigma
 
-        # Feed the ratings into TrueSkill
-        ratings.run_trueskill(results)
+        # Predicted placing for ALL racers (including DNFs)
         ratings.get_predicted_places(results)
+
+        # Feed the ratings into TrueSkill - rate only those that placed
+        mappings = ratings.run_trueskill(results.filter(Results.Place != None))
+        Results.update(mappings)
 
         # Update the racers table with the new ratings
         Racers.update(results)
+
 
 def get_racer_table(racer_id):
     """Returns a list of dictionaries of results for the given racer id.
