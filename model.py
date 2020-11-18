@@ -290,11 +290,8 @@ class Results(Model, db.Model):
 
     @classmethod
     def get_racer_results(cls, racer_id):
-        """For a given RacerID, returns a generator of Results rows for that
-           racer."""
-        return cls.query \
-                  .filter(cls.RacerID == racer_id) \
-                  .order_by(cls.index)
+        """For a given RacerID, returns Results rows for that racer."""
+        return cls.query.filter(cls.RacerID == racer_id)
 
 def add_categories():
     """Update the Races table with the categories represented in the
@@ -397,9 +394,11 @@ def get_racer_table(racer_id):
        RaceCategoryName associated with the result."""
     racer_results = Results.get_racer_results(racer_id)
     race_metadata = racer_results.join(Races, Races.race_id == Results.race_id) \
-                                 .with_entities(Races.date,
+                                 .with_entities(Results,
+                                                Races.date,
                                                 Races.categories,
-                                                Races.num_racers)
+                                                Races.num_racers) \
+                                 .order_by(Races.date.desc())
 
     def get_num_racers(category, categories, num_racers):
         return num_racers[categories.index(category)]
@@ -407,10 +406,9 @@ def get_racer_table(racer_id):
     dict_merge = lambda a,b: a.update(b) or a  # updates a with b then returns a
 
     racer_table = []
-    for row, row_meta in zip(racer_results, race_metadata):
-        meta = {'date': row_meta[0],
+    for row, date, categories, num_racers in race_metadata:
+        meta = {'date': date,
                 'num_racers': get_num_racers(row.RaceCategoryName,
-                                             *row_meta[1:])}
+                                             categories, num_racers)}
         racer_table.append(dict_merge(row.__dict__, meta))
-
     return racer_table
