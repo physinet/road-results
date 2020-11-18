@@ -118,6 +118,12 @@ class Races(Model, db.Model):
         """Return a list of the names of all races"""
         return list(cls._get_race_names().keys())
 
+    @classmethod
+    def get_urls(cls):
+        """Return a list of JSON results file URLs"""
+        return list(map(lambda x: x[0], cls.query
+                                           .with_entities(cls.json_url)
+                                           .all()))
 
 class Racers(Model, db.Model):
     RacerID = db.Column(db.Integer, primary_key=True)
@@ -196,32 +202,6 @@ class Results(Model, db.Model):
         return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"
 
     @classmethod
-    def add_local(cls, id_range=(0,13000)):
-        """Add to the Results table from locally saved pickled json files.
-        id_range sets the range of race_ids we should load into the database.
-        """
-        files = glob.iglob(os.path.join(
-            'C:\\', 'data', 'results', 'races', '*.pkd'))
-
-        id_min, id_max = id_range
-
-        print('Building database!')
-        for f in files:
-            race_id = int(os.path.split(f)[-1].split('.')[0])  # extract race_id
-            if race_id < id_min or race_id > id_max:
-                continue
-            print(race_id)
-
-            import json
-            rows = json.loads(dill.load(open(f, 'rb')))
-            [row.update({'race_id': race_id}) for row in rows]
-
-            rows = clean(rows)
-            # Add results directly from file without updating ratings
-            cls.add(rows)
-
-
-    @classmethod
     def get_race_table(cls, race_id, RaceCategoryName):
         """For given race_id and RaceCategoryName, returns a generator of
            Results rows"""
@@ -273,11 +253,12 @@ def add_tables():
         raise Exception('Rows exist in Results table. Can\'t add!')
 
     race_ids = list(range(10000, 10011))
+    print('Scraping BikeReg race pages for metadata...')
     rows = scraping.scrape_race_pages(race_ids)
-    print('Committing scraped race pages to database...')
+    print('Committing scraped race metadata to database...')
     Races.add(rows)
-    print('Adding results from locally saved JSON files...')
-    Results.add_local(id_range=(10000, 10010))
+    print('Scraping BikeReg JSON results files...')
+    Results.add(scraping.scrape_results(Races.get_urls()))
     print('Populating categories...')
     add_categories()
     print('Removing races not in the Results table...')

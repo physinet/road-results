@@ -1,9 +1,11 @@
 import re
+import json
+
 from datetime import datetime
 from requests_futures.sessions import FuturesSession
 from bs4 import BeautifulSoup
 
-from model import Races, Racers, Results
+from preprocess import clean
 
 def get_metadata(race_page_text):
     """Extract metadata from BikeReg race results page text,
@@ -51,7 +53,24 @@ def scrape_race_pages(race_ids=list(range(1, 13000))):
         if race_id in [12533, 12534]:  # these didn't work - ignoring
             continue
         row = get_metadata(future.result().text)
-        if row:
+        if row and row.get('json_url'):
             rows[i] = dict(race_id=race_id, **row)
 
     return rows
+
+
+def scrape_results(json_urls):
+    """Scrapes BikeReg results from list of JSON urls."""
+    session = FuturesSession(max_workers=8)
+    futures = [session.get(f'https://results.bikereg.com/{url}')
+                            for url in json_urls]
+    all_rows = []
+    for url, future in zip(json_urls, futures):
+        race_id = re.search('(\d+)', url).group()
+        print(race_id)
+        rows = json.loads(future.result().text)
+        [row.update({'race_id': race_id}) for row in rows]
+        rows = clean(rows)
+        all_rows.extend(rows)
+
+    return all_rows
