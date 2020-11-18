@@ -1,6 +1,7 @@
 import dill
 import glob
 import os
+import time
 import pandas as pd
 
 from sqlalchemy import update, func
@@ -11,6 +12,7 @@ from database import db
 from preprocess import clean
 import ratings
 import scraping
+
 
 
 class Model:
@@ -252,17 +254,18 @@ def add_tables():
     if Results.query.count() > 0:
         raise Exception('Rows exist in Results table. Can\'t add!')
 
-    race_ids = list(range(10000, 10011))
+    time0 = time.time()
     print('Scraping BikeReg race pages for metadata...')
-    rows = scraping.scrape_race_pages(race_ids)
-    print('Committing scraped race metadata to database...')
-    Races.add(rows)
+    for i in range(12533, 12540):
+        row = scraping.scrape_race_page(i)
+        Races.add([row])
+        print('Elapsed time: ', time.time() - time0)
     print('Scraping BikeReg JSON results files...')
     Results.add(scraping.scrape_results(Races.get_urls()))
+    print('Elapsed time: ', time.time() - time0)
     print('Populating categories...')
     add_categories()
-    print('Removing races not in the Results table...')
-    filter_races()
+    print('Elapsed time: ', time.time() - time0)
 
 def filter_races():
     """Drop rows from the races table that correspond to races NOT represented
