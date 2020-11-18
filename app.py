@@ -15,9 +15,9 @@ from preprocess import clean
 from plotting import make_racer_plot_alt
 
 # global variables to keep track of which race/racer info to show
-RACE_ID = 10000 #11557
+RACE_ID = 5291 # 10000 #11557
 CATEGORY_NAME = 'Men Collegiate CAT A'
-RACER_ID = 9915  #177974
+RACER_ID = 12150  # 9915  #177974
 SCROLL = ''
 
 
@@ -70,7 +70,12 @@ def index_post():
     racer_table = model.get_racer_table(RACER_ID)
     racer_name = Racers.get_racer_name(RACER_ID)
 
-    chart = make_racer_plot_alt(racer_table)
+    counts = {table: eval(f'{table}.count()')
+                    for table in ['Races', 'Results', 'Racers']}
+    print(counts)
+
+    chart = None
+    # chart = make_racer_plot_alt(racer_table)
 
     return render_template('index.html',
                            race_form=race_form,
@@ -80,6 +85,7 @@ def index_post():
                            race_table=race_table,
                            racer_table=racer_table,
                            racer_name=racer_name,
+                           counts=counts,
                            chart=chart)
 
 
@@ -99,13 +105,34 @@ def race_suggestions(box):
 
 @app.route('/database')
 def preview_database(methods=['GET', 'POST']):
-    if app.config.get('DB_WRITE_ACCESS'):
-        if request.args.get('drop'):
-            commands.db_drop_all()
-            commands.db_create_all()
 
-        if request.args.get('add'):
-            model.add_tables()
+    def parse_tables(tables_string):
+        """Takes a string of table names (e.g. "Races,Results") and returns
+        a list of table objects. If tables_string is True, will return a list
+        containing all table objects.
+        """
+        _tables = {'Races': Races, 'Results': Results, 'Racers': Racers}
+
+        tables = []
+        if tables_string == 'True':
+            tables = [Results, Races, Racers]
+        elif tables_string:
+            tables = [Table for name, Table in _tables.items()
+                        if name in tables_string.split(',')]
+
+        return tables
+
+    if app.config.get('DB_WRITE_ACCESS'):
+        drop_tables = parse_tables(request.args.get('drop'))
+        commands.db_drop_all(drop_tables)
+        commands.db_create_all(drop_tables)
+
+        add_tables = parse_tables(request.args.get('add'))
+
+        if Races in add_tables:
+            Races.add_table(list(range(1, 13000)))
+        if Results in add_tables:
+            Results.add_table(Races.get_urls())
 
         if request.args.get('rate'):
             model.get_all_ratings()
@@ -113,7 +140,7 @@ def preview_database(methods=['GET', 'POST']):
     # Table is the appropriate class (default Results if no table param)
     Table = eval(str(request.args.get('table'))) or Results
 
-    rows = Table.get_sample(2000)
+    rows = Table.get_sample(2000, start=(request.args.get('start') or 0))
     cols = Table.get_columns()
 
     return render_template('database.html', cols=cols, rows=rows)

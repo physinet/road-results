@@ -1,6 +1,7 @@
 import dill
 import glob
 import os
+import re
 import time
 import pandas as pd
 
@@ -27,23 +28,53 @@ class Model:
         """Add rows to the table. rows is a list of dictionaries
         with keys matching the column names for the table.
         """
-        # Filter out empty dictionaries
-        objs = [cls(**row) if isinstance(row, dict) else cls(**row.__dict__)
-                for row in filter(lambda x: x, rows)]
+        objs = [cls(**row) if isinstance(row, dict)
+                   else cls(**row.__dict__)
+                   for row in filter(lambda x: x, rows)] # filter empty rows
+        objs = cls.drop_duplicates(objs)
+
         db.session.add_all(objs)
         db.session.commit()
 
     @classmethod
-    def get_columns(cls):
-        """Get the column names for the table.
+    def count(cls):
+        """Returns a count of the rows in the table."""
+        return cls.query.count()
+
+    @classmethod
+    def drop_duplicates(cls, rows):
+        """Check list of row objects duplicate index and return list of row
+        objects with unique primary keys.
         """
+        keys = set()
+        final_rows = []
+        for i, row in enumerate(rows):
+            if row.index not in keys:
+                keys.add(row.index)
+                final_rows.append(row)
+        return final_rows
+
+    @classmethod
+    def get_column(cls, col):
+        """Get a list of all distinct values in specified table column."""
+        return sorted(list(x for x, in cls.query
+                                          .with_entities(getattr(cls, col))
+                                          .distinct()
+                                          .all()))
+
+    @classmethod
+    def get_columns(cls):
+        """Get the column names for the table."""
         return list(cls.__table__.columns.keys())
 
     @classmethod
-    def get_sample(cls, limit):
-        """Get the first `limit` rows of the table.
+    def get_sample(cls, limit, start=0):
+        """Get the first `limit` rows of the table starting at index start.
         """
-        return cls.query.order_by(cls.index).limit(limit)
+        return (cls.query
+                   .filter(cls.index >= start)
+                   .order_by(cls.index)
+                   .limit(limit))
 
     @classmethod
     def update(cls, rows):
@@ -51,6 +82,9 @@ class Model:
         Only attributes of each row matching column names in the table
         will be considered.
         """
+        if not rows: # empty list
+            return
+
         # Filter empty rows and take dictionary if each row is an object
         if not isinstance(rows[0], dict):
             rows = map(lambda x: x.__dict__, filter(lambda x: x, rows))
@@ -82,6 +116,19 @@ class Races(Model, db.Model):
     def __repr__(self):
         return f"Race: {self.race_id, self.name}"
 
+    @classmethod
+    def add_table(cls, race_ids=list(range(1, 13000))):
+        time0 = time.time()
+
+        # Only add race_ids not yet in table
+        race_ids = sorted(list(set(race_ids) - cls.get_column('race_id')))
+
+        print('Scraping BikeReg race pages for metadata...')
+        futures = scraping.get_futures(race_ids)
+        for race_id, future in zip(race_ids, futures):
+            row = scraping.scrape_race_page(race_id, future.result().text)
+            cls.add([row])
+            print('Elapsed time: ', time.time() - time0)
 
     @classmethod
     def get_categories(cls, race_id):
@@ -125,6 +172,7 @@ class Races(Model, db.Model):
         """Return a list of JSON results file URLs"""
         return list(map(lambda x: x[0], cls.query
                                            .with_entities(cls.json_url)
+                                           .order_by(cls.race_id)
                                            .all()))
 
 class Racers(Model, db.Model):
@@ -203,6 +251,33 @@ class Results(Model, db.Model):
     def __repr__(self):
         return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"
 
+
+    @classmethod
+    def add_table(cls, urls):
+        """Add results from a list of BikeReg JSON file URLs. These can be
+        obtained from the Races table using Races.get_urls().
+        """
+
+        # Only add results with race_ids not yet in table
+        d = {int(re.search('(\d+)', url).group()): url for url in urls}
+        for race_id in cls.get_column('race_id'):
+            d.pop(race_id, None) # remove race_ids already in table
+
+        race_ids, urls = zip(*sorted(zip(d.keys(), d.values())))
+
+        time0 = time.time()
+        print('Scraping BikeReg JSON results files...')
+        futures = scraping.get_results_futures(urls)
+        for race_id, url, future in zip(race_ids, urls, futures):
+            print(race_id)
+            rows = scraping.scrape_results_json(race_id, future.result().text)
+            cls.add(rows)
+            print('Elapsed time: ', time.time() - time0)
+
+        print('Populating categories...')
+        add_categories()
+        print('Elapsed time: ', time.time() - time0)
+
     @classmethod
     def get_race_table(cls, race_id, RaceCategoryName):
         """For given race_id and RaceCategoryName, returns a generator of
@@ -220,8 +295,6 @@ class Results(Model, db.Model):
         return cls.query \
                   .filter(cls.RacerID == racer_id) \
                   .order_by(cls.index)
-
-
 
 def add_categories():
     """Update the Races table with the categories represented in the
@@ -245,27 +318,6 @@ def add_categories():
                    .group_by(cat_counts.c.race_id))
     Races.update([c._asdict() for c in collected])
 
-
-def add_tables():
-    """Add data to the Races and Results tables. First scrapes metadata for the
-    Races table, then uses the json_url for each row to collect results from
-    the JSON files available at those urls.
-    """
-    if Results.query.count() > 0:
-        raise Exception('Rows exist in Results table. Can\'t add!')
-
-    time0 = time.time()
-    print('Scraping BikeReg race pages for metadata...')
-    for i in range(12533, 12540):
-        row = scraping.scrape_race_page(i)
-        Races.add([row])
-        print('Elapsed time: ', time.time() - time0)
-    print('Scraping BikeReg JSON results files...')
-    Results.add(scraping.scrape_results(Races.get_urls()))
-    print('Elapsed time: ', time.time() - time0)
-    print('Populating categories...')
-    add_categories()
-    print('Elapsed time: ', time.time() - time0)
 
 def filter_races():
     """Drop rows from the races table that correspond to races NOT represented
