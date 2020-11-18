@@ -133,6 +133,8 @@ def preview_database(methods=['GET', 'POST']):
         if Results in add_tables:
             Results.add_table(Races.get_urls())
 
+        if request.args.get('reset'):
+            model.reset_ratings()
         if request.args.get('rate'):
             model.get_all_ratings()
 

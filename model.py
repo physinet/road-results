@@ -5,6 +5,7 @@ import re
 import time
 import pandas as pd
 
+import sqlalchemy as sa
 from sqlalchemy import update, func
 from sqlalchemy.orm import synonym
 
@@ -244,8 +245,8 @@ class Results(Model, db.Model):
     race_id = db.Column(db.Integer)
     prior_mu = db.Column(db.Float, default=ratings.env.mu)
     prior_sigma = db.Column(db.Float, default=ratings.env.sigma)
-    mu = db.Column(db.Float)
-    sigma = db.Column(db.Float)
+    mu = db.Column(db.Float, default=ratings.env.mu)
+    sigma = db.Column(db.Float,  default=ratings.env.sigma)
     predicted_place = db.Column(db.Integer)
 
     def __repr__(self):
@@ -388,10 +389,11 @@ def get_all_ratings():
 
 def get_racer_table(racer_id):
     """Returns a list of dictionaries of results for the given racer id.
-       Each dictionary is essentially a Results row object with some
-       information joined from the Races table: date and num_racers,
-       where num_racers is the appropriate number of racers for the
-       RaceCategoryName associated with the result."""
+    Each dictionary is essentially a Results row object with some
+    information joined from the Races table: date and num_racers,
+    where num_racers is the appropriate number of racers for the
+    RaceCategoryName associated with the result.
+    """
     racer_results = Results.get_racer_results(racer_id)
     race_metadata = racer_results.join(Races, Races.race_id == Results.race_id) \
                                  .with_entities(Results,
@@ -412,3 +414,16 @@ def get_racer_table(racer_id):
                                              categories, num_racers)}
         racer_table.append(dict_merge(row.__dict__, meta))
     return racer_table
+
+def reset_ratings():
+    """Reset all ratings to default values."""
+    defaults = {'mu': ratings.env.mu, 'sigma': ratings.env.sigma,
+                'prior_mu': ratings.env.mu, 'prior_sigma': ratings.env.sigma}
+    print('Resetting ratings in Results...')
+    Results.query.update(defaults, synchronize_session=False)
+
+    defaults = {'mu': ratings.env.mu, 'sigma': ratings.env.sigma}
+    print('Resetting ratings in Racers...')
+    Racers.query.update(defaults, synchronize_session=False)
+    db.session.flush()
+    db.session.commit()
