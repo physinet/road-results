@@ -346,21 +346,6 @@ def get_all_ratings():
                                         Results.race_id,
                                         Results.RaceCategoryName,
                                         Results.Place))
-                              # .yield_per(1000)) # assuming <1000 racers in race
-    # print(f'Made groups: {time.time() - time0}')
-
-    # for result in ordered_results.limit(10).all():
-    #     print(result)
-    # print(f'Printed preview: {time.time() - time0}')
-    #
-    # seen_keys = []
-    # for k, group in groupby(ordered_results.limit(1000),
-    #                         lambda x: (x.race_id, x.RaceCategoryName)):
-    #     print()
-    #     if k[1] in seen_keys:
-    #         print(k, [r.Name for r in group])
-    #     seen_keys.append(k[1])
-    # print(f'Printed groups: {time.time() - time0}')
 
     groups = groupby(ordered_results, lambda x: (x.race_id, x.RaceCategoryName))
     print(f'Made groupby: {time.time() - time0}') # 8s for full dataset
@@ -388,30 +373,39 @@ def get_all_ratings():
         ratings.get_predicted_places(results)
         # print(f'Predicted places: {time.time() - time0}')
 
-        # Feed the ratings into TrueSkill - rate only those that placed
-        placing_results = list(filter(lambda x: x.Place != None, results))
+        # Filter out DNFs - make lists from pairs of results/racers with
+        # valid result.Place
+        result_racer_tuples = list(filter(
+            lambda x: x[0].Place != None, zip(results, racers)
+        ))
+        if not result_racer_tuples:
+            continue  # empty list!
+        placing_results, placing_racers = map(list, zip(*result_racer_tuples))
+
+        # Rate using trueskill
         if len(placing_results) <= 1:  # don't rate uncontested races
             continue
-        mappings = ratings.run_trueskill(placing_results)
-        # each mapping is modified in run_trueskill somehow - make copies
-        mappings2 = [mapping.copy() for mapping in mappings]
-        # print(f'TrueSkill: {time.time() - time0}')
+        new_ratings = ratings.run_trueskill(placing_results)
 
-        Results.update(mappings, commit=False)
-        # print(f'Update results: {time.time() - time0}')
+        # Update results and racers rows
+        for result, racer, rating in zip(placing_results,
+                                         placing_racers,
+                                         new_ratings):
+            result.mu = rating.mu
+            result.sigma = rating.sigma
+            racer.mu = rating.mu
+            racer.sigma = rating.sigma
 
-        # Update the racers table with the new ratings
-        Racers.update(mappings2, commit=False)
-        # print(f'Update racers: {time.time() - time0}')
         print(f'Elapsed time: {time.time() - time0}')
-        if time.time()-time0 > 120:
+        if time.time()-time0 > 240:
             break
 
+    # Committing can take ~15 seconds with entire dataset, regardless of how
+    # many rows were updated
     time0 = time.time()
     db.session.flush()
     db.session.commit()
-    print(f'Time to commit: {time.time()-time0}')
-
+    print(f'Committing took: {time.time() - time0}')
 
 def get_racer_table(racer_id):
     """Returns a list of dictionaries of results for the given racer id.

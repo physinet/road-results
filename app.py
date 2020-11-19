@@ -73,8 +73,8 @@ def index_post():
     counts = {table: eval(f'{table}.count()')
                     for table in ['Races', 'Results', 'Racers']}
 
-    chart = None
-    # chart = make_racer_plot_alt(racer_table)
+    # chart = None
+    chart = make_racer_plot_alt(racer_table)
 
     return render_template('index.html',
                            race_form=race_form,

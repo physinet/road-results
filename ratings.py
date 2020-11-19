@@ -29,14 +29,11 @@ def run_trueskill(results):
     try:
         new_ratings = env.rate([[env.Rating(result.prior_mu, result.prior_sigma)]
                                 for result in results])
+        new_ratings = [rating[0] for rating in new_ratings]
     except FloatingPointError as e:
         import dill
         dill.dump([(result.prior_mu, result.prior_sigma) for result in results],
                     open('error.pkl', 'wb'))
         print(e)
 
-    mappings = [result.__dict__ for result in results]
-    for row, new_rating in zip(mappings, new_ratings):
-        row.update({'mu': new_rating[0].mu, 'sigma': new_rating[0].sigma})
-
-    return mappings
+    return new_ratings
