@@ -25,25 +25,31 @@ def make_racer_plot_alt(racer_table):
     df['mu+sigma'] = df['mu'] + df['sigma']
     df['mu-sigma'] = df['mu'] - df['sigma']
 
-
+    df = df.rename(columns={'RaceName': 'Race Name'})
     df = df.reset_index()  # Replace "index" column with index of df
+
+    scalex = alt.Scale(domain=[df.index.min(), df.index.max()],
+                      nice=False, zero=True)
+
+    scaley = alt.Scale(zero=False)
 
     mu = alt.Chart(df).encode(
         x=alt.X('index', title='Race number',
+                scale=scalex,
                 axis=alt.Axis(tickMinStep=1, grid=False)),
-        y=alt.Y('mu', title='Rating', axis=alt.Axis(grid=False)),
-        tooltip=['RaceName', 'Place']
+        y=alt.Y('mu', title='Rating', scale=scaley, axis=alt.Axis(grid=False)),
+        tooltip=['Race Name', 'Place']
     )
 
     mu = mu.mark_line(color='black') + mu.mark_point(color='black')
 
     sigma = alt.Chart(df).encode(
-        x='index',
-        y='mu+sigma',
+        x=alt.X('index', scale=scalex),
+        y=alt.Y('mu+sigma', scale=scaley),
         y2='mu-sigma'
     ).mark_area(opacity=0.3)
 
-    chart = mu + sigma
+    chart = sigma + mu
 
     chart = chart.configure_axis(
         labelFontSize=16,

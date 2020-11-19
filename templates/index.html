@@ -281,7 +281,7 @@
                 </tr>
               </thead>
               <tbody>
-                {% for row in racer_table %}
+                {% for row in racer_table[::-1] %}
                 <tr>
                   <th style="text-align: center; width: 10%;" scope="row">{{ loop.index }}</th>
                   <th style="text-align: center; width: 20%;" scope="row">{{ row['date'].strftime('%B %d, %Y') }}</th>

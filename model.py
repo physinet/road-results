@@ -397,8 +397,6 @@ def get_all_ratings():
             racer.sigma = rating.sigma
 
         print(f'Elapsed time: {time.time() - time0}')
-        if time.time()-time0 > 240:
-            break
 
     # Committing can take ~15 seconds with entire dataset, regardless of how
     # many rows were updated
@@ -420,7 +418,7 @@ def get_racer_table(racer_id):
                                                 Races.date,
                                                 Races.categories,
                                                 Races.num_racers) \
-                                 .order_by(Races.date.desc())
+                                 .order_by(Races.date)
 
     def get_num_racers(category, categories, num_racers):
         return num_racers[categories.index(category)]
