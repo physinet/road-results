@@ -5,6 +5,8 @@ import re
 import time
 import pandas as pd
 
+from itertools import groupby
+
 import sqlalchemy as sa
 from sqlalchemy import update, func
 from sqlalchemy.orm import synonym
@@ -78,7 +80,7 @@ class Model:
                    .limit(limit))
 
     @classmethod
-    def update(cls, rows):
+    def update(cls, rows, commit=True):
         """Update table from list of rows, which may be from other tables.
         Only attributes of each row matching column names in the table
         will be considered.
@@ -97,8 +99,9 @@ class Model:
                      for row in rows]
 
         db.session.bulk_update_mappings(cls, mappings)
-        db.session.flush()
-        db.session.commit()
+        if commit:
+            db.session.flush()
+            db.session.commit()
 
 
 class Races(Model, db.Model):
@@ -191,14 +194,18 @@ class Racers(Model, db.Model):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
 
     @classmethod
-    def add(cls, results):
-        """Add rows to the table from results rows. Will only attempt to add
-        rows with new RacerIDs not already in the table.
-        """
-        new = results.filter(Results.RacerID.notin_(
-                                Racers.query.with_entities(Racers.RacerID)
-                            ))
-        super().add(new)
+    def add_table(cls):
+        """Add racers to the table from the Results table."""
+        # For each RacerID, take "max" (only) name, max age, and min category.
+        rows = (Results.query
+                       .with_entities(Results.RacerID,
+                                      func.max(Results.Name),
+                                      func.max(Results.Age),
+                                      func.min(Results.Category))
+                       .group_by(Results.RacerID))
+        rows = ({'RacerID': row[0], 'Name': row[1],
+                 'Age': row[2], 'Category': row[3]} for row in rows)
+        cls.add(rows)
 
     @classmethod
     def get_racer_id(cls, name):
@@ -329,62 +336,81 @@ def filter_races():
 def get_all_ratings():
     """Get all ratings for results in the Results table."""
 
-    results_groups = (
-        Results.query
-               .join(Races, Races.race_id == Results.race_id)
-               .with_entities(Results.race_id,
-                              Results.RaceCategoryName,
-                              Races.date,
-                              func.array_agg(Results.RacerID).label('id_list'))
-               .group_by(Results.race_id,
-                         Results.RaceCategoryName,
-                         Races.date)
-               .order_by(Races.date)
-    )
+    import time
+    time0 = time.time()
 
-    for race_id, category, date, racer_id_list in results_groups:
-        print(f'Rating race {race_id} category {category} date {date}')
-        # Get a table with the relevant results we want to rate
-        results = Results.query.filter(Results.race_id == race_id) \
-                               .filter(Results.RaceCategoryName == category) \
-                               .filter(Results.RacerID.in_(racer_id_list))
+    print('Starting to rate!')
+    ordered_results = (Results.query
+                              .join(Races, Races.race_id == Results.race_id)
+                              .order_by(Races.date,
+                                        Results.race_id,
+                                        Results.RaceCategoryName,
+                                        Results.Place))
+                              # .yield_per(1000)) # assuming <1000 racers in race
+    # print(f'Made groups: {time.time() - time0}')
 
-        if results.count() == 1:  # don't rate uncontested races
-            continue
+    # for result in ordered_results.limit(10).all():
+    #     print(result)
+    # print(f'Printed preview: {time.time() - time0}')
+    #
+    # seen_keys = []
+    # for k, group in groupby(ordered_results.limit(1000),
+    #                         lambda x: (x.race_id, x.RaceCategoryName)):
+    #     print()
+    #     if k[1] in seen_keys:
+    #         print(k, [r.Name for r in group])
+    #     seen_keys.append(k[1])
+    # print(f'Printed groups: {time.time() - time0}')
 
-        # Update Racers table with new racers (and give them default ratings)
-        Racers.add(results)
+    groups = groupby(ordered_results, lambda x: (x.race_id, x.RaceCategoryName))
+    print(f'Made groupby: {time.time() - time0}') # 8s for full dataset
 
-        # Join the Results and Racers tables to get prior ratings
-        # cte() essentially makes results a subquery like "WITH ... AS ..."
-        results_cte = results.cte()  # WITH ... AS ...
-        results_racers = \
-            db.session \
-              .query(results_cte, Racers.mu, Racers.sigma) \
-              .join(Racers, results_cte.c.RacerID == Racers.RacerID)
+    # Warning... this will hog memory!
+    for (race_id, category), results in groups:  # ~30s delay to fetch and start
+        print(f'Rating race {race_id} category {category}')
+        results = list(results)
 
-        assert results_racers.count() == results.count(), \
-               'Some racers missing from either Results or Racers table!'
+        # Get Racers rows corresponding to the results
+        racers = [Racers.query.get(result.RacerID) for result in results]
+        # print(f'Got racers rows: {time.time() - time0}')
 
-
-        # Store prior ratings in Results table
-        for result, result_racers in zip(results, results_racers):
-            result.prior_mu = result_racers.mu
-            result.prior_sigma = result_racers.sigma
-            # Also record the prior ratings in the "current" ratings columns
-            # run_trueskill will update these for every placing racer
-            result.mu = result_racers.mu
-            result.sigma = result_racers.sigma
+        # Store prior ratings in Results table in both prior mu/sigma and
+        # current mu/sigma columns - current mu/sigma will change for placing
+        # racers and not change for DNF racers
+        for result, racer in zip(results, racers):
+            result.prior_mu = racer.mu
+            result.prior_sigma = racer.sigma
+            result.mu = racer.mu
+            result.sigma = racer.sigma
+        # print(f'store prior ratings: {time.time() - time0}')
 
         # Predicted placing for ALL racers (including DNFs)
         ratings.get_predicted_places(results)
+        # print(f'Predicted places: {time.time() - time0}')
 
         # Feed the ratings into TrueSkill - rate only those that placed
-        mappings = ratings.run_trueskill(results.filter(Results.Place != None))
-        Results.update(mappings)
+        placing_results = list(filter(lambda x: x.Place != None, results))
+        if len(placing_results) <= 1:  # don't rate uncontested races
+            continue
+        mappings = ratings.run_trueskill(placing_results)
+        # each mapping is modified in run_trueskill somehow - make copies
+        mappings2 = [mapping.copy() for mapping in mappings]
+        # print(f'TrueSkill: {time.time() - time0}')
+
+        Results.update(mappings, commit=False)
+        # print(f'Update results: {time.time() - time0}')
 
         # Update the racers table with the new ratings
-        Racers.update(results)
+        Racers.update(mappings2, commit=False)
+        # print(f'Update racers: {time.time() - time0}')
+        print(f'Elapsed time: {time.time() - time0}')
+        if time.time()-time0 > 120:
+            break
+
+    time0 = time.time()
+    db.session.flush()
+    db.session.commit()
+    print(f'Time to commit: {time.time()-time0}')
 
 
 def get_racer_table(racer_id):

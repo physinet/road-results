@@ -130,3 +130,5 @@ dmypy.json
 
 # Bootstrap
 node_modules
+*.pkl
+*.ipynb

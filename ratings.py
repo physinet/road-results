@@ -1,15 +1,16 @@
 import trueskill as ts
-import pandas as pd
+
 from sqlalchemy import update
+from scipy.stats import rankdata
 
 from database import db
+
 
 env = ts.TrueSkill(backend='mpmath', draw_probability=0)
 
 def get_predicted_places(results):
     """Gets the predicted place for each racer in a set of results. Placing
        order determined by decreasing mean rating."""
-    from scipy.stats import rankdata
 
     ranks = rankdata([-x.prior_mu for x in results], method='min')
     for result, rank in zip(results, ranks):
@@ -22,14 +23,17 @@ def run_trueskill(results):
     Returns [] if the rating is uncontested and the results are not updated.
     """
 
-    if results.count() <= 1:  # Uncontested race - only increment num races
-        return []
-
     # TrueSkill requires each "team" as a list. Our teams are one person each
     # and consist of one rating. We then need to get the only element from the
     # returned list to access the updated ratings
-    new_ratings = ts.rate([[ts.Rating(result.prior_mu, result.prior_sigma)]
-                            for result in results])
+    try:
+        new_ratings = env.rate([[env.Rating(result.prior_mu, result.prior_sigma)]
+                                for result in results])
+    except FloatingPointError as e:
+        import dill
+        dill.dump([(result.prior_mu, result.prior_sigma) for result in results],
+                    open('error.pkl', 'wb'))
+        print(e)
 
     mappings = [result.__dict__ for result in results]
     for row, new_rating in zip(mappings, new_ratings):

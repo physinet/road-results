@@ -132,6 +132,8 @@ def preview_database(methods=['GET', 'POST']):
             Races.add_table(list(range(1, 13000)))
         if Results in add_tables:
             Results.add_table(Races.get_urls())
+        if Racers in add_tables:
+            Racers.add_table()
 
         if request.args.get('reset'):
             model.reset_ratings()
