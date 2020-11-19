@@ -333,10 +333,9 @@ def filter_races():
     Races.query.filter(~Races.race_id.in_(races)).delete('fetch')
     db.session.commit()
 
-def get_all_ratings():
+def get_all_ratings(debug_limit=None):
     """Get all ratings for results in the Results table."""
 
-    import time
     time0 = time.time()
 
     print('Starting to rate!')
@@ -347,7 +346,8 @@ def get_all_ratings():
                                         Results.RaceCategoryName,
                                         Results.Place))
 
-    groups = groupby(ordered_results, lambda x: (x.race_id, x.RaceCategoryName))
+    groups = groupby(ordered_results.limit(debug_limit),
+                     lambda x: (x.race_id, x.RaceCategoryName))
     print(f'Made groupby: {time.time() - time0}') # 8s for full dataset
 
     # Warning... this will hog memory!
@@ -398,12 +398,13 @@ def get_all_ratings():
 
         print(f'Elapsed time: {time.time() - time0}')
 
-    # Committing can take ~15 seconds with entire dataset, regardless of how
-    # many rows were updated
+    # Committing can take ~15 seconds with entire dataset, regardless
+    # of how many rows were updated
     time0 = time.time()
     db.session.flush()
     db.session.commit()
     print(f'Committing took: {time.time() - time0}')
+
 
 def get_racer_table(racer_id):
     """Returns a list of dictionaries of results for the given racer id.

@@ -138,7 +138,7 @@ def preview_database(methods=['GET', 'POST']):
         if request.args.get('reset'):
             model.reset_ratings()
         if request.args.get('rate'):
-            model.get_all_ratings()
+            model.get_all_ratings(request.args.get('limit'))
 
     # Table is the appropriate class (default Results if no table param)
     Table = eval(str(request.args.get('table'))) or Results
