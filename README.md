@@ -33,18 +33,29 @@ I have adapted the Python implementation of [TrueSkill](https://trueskill.org/) 
 ## Website
 The website is a [Flask](https://flask.palletsprojects.com/en/1.1.x/) application deployed on [Heroku](https://www.heroku.com/) with a single user-facing webpage.
 
-For troubleshooting, I set up the `/database` URL to display the first 2000 rows of each table in the database. Use the parameter `?table=Races` (e.g.) to query the desired table.
+For troubleshooting, I set up the `/database` URL to display the first 2000 rows of each table in the database. The parameters `table` and `start` can be used to specify which table to query and from what index to start showing results (e.g. `?table=Races&start=23`). If the `table` parameter is not specified, the page displays the `Results` table, and if the `start` parameter is not specified, the rows start from index 0.
 
 The Heroku app uses a production configuration (see `config.py`) which prevents users
 from altering the database. In a development configuration, the following parameters can be used to alter the database using the `/database` URL:
-- `drop`: if `True`, will drop all tables and re-create empty tables with the appropriate schema.
-- `add`: if `True`, will attempt to add rows to the database from locally saved pandas DataFrames from the hard-coded locations on *my* computer. This is not meant for other users.
+- `drop`: either `True` or comma-separated table names (e.g. `Races,Results`). Will drop listed tables (all tables if `True`) and re-create empty tables with the appropriate schema, using the functions `commands.db_drop_all` and `commands.db_create_all`.
+- `add`: either `True` or comma-separated table names (e.g. `Races,Results`). Will attempt to add rows to the listed tables (all tables if `True`) by scraping each BikeReg race page and/or results JSON. This parameter calls the `add_table` method for each table.
+- `subset`: two comma-separated integers (e.g. `subset=1,1000`) indicating the range of `race_id`s to add to the `Races` table. If not specified, the range of `race_id`s will be `1,13000`.
 - `rate`: if `True`, will apply TrueSkill to all results in the database, regardless of whether the results have been rated already or not.
-- `filter`: if `True`, removes races from the `Races` table that are not yet represented in the `Results` table. I used this while troubleshooting using only a subset of the data.
+- `limit`: integer specifying the number of `Results` rows to rate, for debugging purposes.
 
 # Instructions for running locally
-Details to be added...
-
 Follow these steps to get the website running on your local machine:
 1. `git clone` the repository
 1. `pip install -r requirements.txt`
+1. [Install](https://www.postgresql.org/download/) PostgreSQL and [create a database](https://www.tutorialspoint.com/postgresql/postgresql_create_database.htm).
+1. Create a `.env` file in the root directory of the project with the following contents:
+```
+APP_SETTINGS=config.DevelopmentConfig
+DATABASE_URL=postgres://<username>:<password>@<host>:<port>/<db_name>
+SECRET_KEY=<secret_key_here>
+```
+1. Execute `flask db-create-all` to create all tables in the database (execute `flask db-drop-all` first if tables already exist in the database).
+1. Run the Flask app with `flask run`.
+1. Navigate to `localhost:5000/database`. At this point, the `Results` table is empty, so you should only see the column names.
+1. Navigate to `localhost:5000/database?add=True&subset=1,1000` to add data to (in order) the `Races`, `Results`, and `Racers` tables. As explained above, the `subset` parameter (optional) can be used to limit the number of races considered and should be omitted to add the entire dataset.
+1. Finally, navigate to `localhost:5000`. If the default race and racer are not in the database yet, the home page will display a random race and a random racer that participated in that race.
