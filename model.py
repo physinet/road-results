@@ -5,7 +5,6 @@ import re
 import time
 import pandas as pd
 
-from itertools import groupby
 
 import sqlalchemy as sa
 from sqlalchemy import update, func
@@ -14,10 +13,8 @@ from sqlalchemy.orm import synonym
 from database import db
 
 from preprocess import clean
-import ratings
 import scraping
-
-
+import config
 
 class Model:
     def __init__(self, **entries):
@@ -125,7 +122,7 @@ class Races(Model, db.Model):
         time0 = time.time()
 
         # Only add race_ids not yet in table
-        race_ids = sorted(list(set(race_ids) - cls.get_column('race_id')))
+        race_ids = sorted(list(set(race_ids) - set(cls.get_column('race_id'))))
 
         print('Scraping BikeReg race pages for metadata...')
         futures = scraping.get_futures(race_ids)
@@ -185,8 +182,8 @@ class Racers(Model, db.Model):
     Name = db.Column(db.String)
     Age = db.Column(db.String)
     Category = db.Column(db.Integer)
-    mu = db.Column(db.Float, default=ratings.env.mu)
-    sigma = db.Column(db.Float, default=ratings.env.sigma)
+    mu = db.Column(db.Float, default=config.MU)
+    sigma = db.Column(db.Float, default=config.SIGMA)
     num_races = db.Column(db.Integer, default=1)
     _racer_names = None
 
@@ -250,10 +247,10 @@ class Results(Model, db.Model):
     RaceName = db.Column(db.String)
     RaceCategoryName = db.Column(db.String)
     race_id = db.Column(db.Integer)
-    prior_mu = db.Column(db.Float, default=ratings.env.mu)
-    prior_sigma = db.Column(db.Float, default=ratings.env.sigma)
-    mu = db.Column(db.Float, default=ratings.env.mu)
-    sigma = db.Column(db.Float,  default=ratings.env.sigma)
+    prior_mu = db.Column(db.Float, default=config.MU)
+    prior_sigma = db.Column(db.Float, default=config.SIGMA)
+    mu = db.Column(db.Float, default=config.MU)
+    sigma = db.Column(db.Float,  default=config.SIGMA)
     predicted_place = db.Column(db.Integer)
 
     def __repr__(self):
@@ -333,78 +330,6 @@ def filter_races():
     Races.query.filter(~Races.race_id.in_(races)).delete('fetch')
     db.session.commit()
 
-def get_all_ratings(debug_limit=None):
-    """Get all ratings for results in the Results table."""
-
-    time0 = time.time()
-
-    print('Starting to rate!')
-    ordered_results = (Results.query
-                              .join(Races, Races.race_id == Results.race_id)
-                              .order_by(Races.date,
-                                        Results.race_id,
-                                        Results.RaceCategoryName,
-                                        Results.Place))
-
-    groups = groupby(ordered_results.limit(debug_limit),
-                     lambda x: (x.race_id, x.RaceCategoryName))
-    print(f'Made groupby: {time.time() - time0}') # 8s for full dataset
-
-    # Warning... this will hog memory!
-    # Entire dataset took nearly 3 hours
-    for (race_id, category), results in groups:  # ~30s delay to fetch and start
-        print(f'Rating race {race_id} category {category}')
-        results = list(results)
-
-        # Get Racers rows corresponding to the results
-        racers = [Racers.query.get(result.RacerID) for result in results]
-        # print(f'Got racers rows: {time.time() - time0}')
-
-        # Store prior ratings in Results table in both prior mu/sigma and
-        # current mu/sigma columns - current mu/sigma will change for placing
-        # racers and not change for DNF racers
-        for result, racer in zip(results, racers):
-            result.prior_mu = racer.mu
-            result.prior_sigma = racer.sigma
-            result.mu = racer.mu
-            result.sigma = racer.sigma
-        # print(f'store prior ratings: {time.time() - time0}')
-
-        # Predicted placing for ALL racers (including DNFs)
-        ratings.get_predicted_places(results)
-        # print(f'Predicted places: {time.time() - time0}')
-
-        # Filter out DNFs - make lists from pairs of results/racers with
-        # valid result.Place
-        result_racer_tuples = list(filter(
-            lambda x: x[0].Place != None, zip(results, racers)
-        ))
-        if not result_racer_tuples:
-            continue  # empty list!
-        placing_results, placing_racers = map(list, zip(*result_racer_tuples))
-
-        # Rate using trueskill
-        if len(placing_results) <= 1:  # don't rate uncontested races
-            continue
-        new_ratings = ratings.run_trueskill(placing_results)
-
-        # Update results and racers rows
-        for result, racer, rating in zip(placing_results,
-                                         placing_racers,
-                                         new_ratings):
-            result.mu = rating.mu
-            result.sigma = rating.sigma
-            racer.mu = rating.mu
-            racer.sigma = rating.sigma
-
-        print(f'Elapsed time: {time.time() - time0}')
-
-    # Committing took ~15 seconds when stopping entire dataset early, but
-    # was instant when done after rating the whole dataset
-    time0 = time.time()
-    db.session.flush()
-    db.session.commit()
-    print(f'Committing took: {time.time() - time0}')
 
 
 def get_racer_table(racer_id):
@@ -434,16 +359,3 @@ def get_racer_table(racer_id):
                                              categories, num_racers)}
         racer_table.append(dict_merge(row.__dict__, meta))
     return racer_table
-
-def reset_ratings():
-    """Reset all ratings to default values."""
-    defaults = {'mu': ratings.env.mu, 'sigma': ratings.env.sigma,
-                'prior_mu': ratings.env.mu, 'prior_sigma': ratings.env.sigma}
-    print('Resetting ratings in Results...')
-    Results.query.update(defaults, synchronize_session=False)
-
-    defaults = {'mu': ratings.env.mu, 'sigma': ratings.env.sigma}
-    print('Resetting ratings in Racers...')
-    Racers.query.update(defaults, synchronize_session=False)
-    db.session.flush()
-    db.session.commit()

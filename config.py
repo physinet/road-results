@@ -1,6 +1,9 @@
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
+# Rating defaults
+MU = 25
+SIGMA = 25/3
 
 class Config(object):
     DEBUG = False

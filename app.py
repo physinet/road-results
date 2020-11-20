@@ -7,6 +7,7 @@ import commands
 import database
 import scraping
 import model
+import ratings
 from model import Results, Races, Racers
 from forms import RaceForm, CategoryForm, RacerForm
 
@@ -129,16 +130,21 @@ def preview_database(methods=['GET', 'POST']):
         add_tables = parse_tables(request.args.get('add'))
 
         if Races in add_tables:
-            Races.add_table(list(range(1, 13000)))
+            subset = request.args.get('subset')
+            if subset: # format '#,###'
+                race_ids = list(range(*map(int, subset.split(','))))
+            else:
+                race_ids = list(range(1, 13000))
+            Races.add_table(race_ids)
         if Results in add_tables:
             Results.add_table(Races.get_urls())
         if Racers in add_tables:
             Racers.add_table()
 
         if request.args.get('reset'):
-            model.reset_ratings()
+            ratings.reset_ratings()
         if request.args.get('rate'):
-            model.get_all_ratings(request.args.get('limit'))
+            ratings.get_all_ratings(request.args.get('limit'))
 
     # Table is the appropriate class (default Results if no table param)
     Table = eval(str(request.args.get('table'))) or Results
