@@ -169,12 +169,18 @@ class Races(Model, db.Model):
         return list(cls._get_race_names().keys())
 
     @classmethod
+    def get_random_id(cls):
+        """Get a random race_id in the table."""
+        return cls.query.order_by(func.random()).first().race_id
+
+    @classmethod
     def get_urls(cls):
         """Return a list of JSON results file URLs"""
         return list(map(lambda x: x[0], cls.query
                                            .with_entities(cls.json_url)
                                            .order_by(cls.race_id)
                                            .all()))
+
 
 class Racers(Model, db.Model):
     RacerID = db.Column(db.Integer, primary_key=True)
@@ -297,6 +303,13 @@ class Results(Model, db.Model):
     def get_racer_results(cls, racer_id):
         """For a given RacerID, returns Results rows for that racer."""
         return cls.query.filter(cls.RacerID == racer_id)
+
+    @classmethod
+    def get_random_racer_id(cls, race_id, category):
+        """Returns a random RacerID in the specified race and category."""
+        return cls.query.filter(cls.race_id == race_id,
+                                cls.RaceCategoryName == category) \
+                  .order_by(func.random()).first().RacerID
 
 def add_categories():
     """Update the Races table with the categories represented in the

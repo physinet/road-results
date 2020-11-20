@@ -15,13 +15,6 @@ from preprocess import clean
 
 from plotting import make_racer_plot_alt
 
-# global variables to keep track of which race/racer info to show
-RACE_ID = 5291 # 10000 #11557
-CATEGORY_NAME = 'Men Collegiate CAT A'
-RACER_ID = 12150  # 9915  #177974
-SCROLL = ''
-
-
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 
@@ -30,10 +23,33 @@ database.init_app(app)
 commands.init_app(app)
 
 
+# global variables to keep track of which race/racer info to show
+RACE_ID = 5291 # 10000 #11557
+CATEGORY_NAME = 'Men Collegiate Cat A'
+RACER_ID = 12150  # 9915  #177974
+SCROLL = ''
+
+
+def check_data_selection():
+    """Makes sure that we are trying to show data that is in the database."""
+
+    global RACE_ID, CATEGORY_NAME, RACER_ID
+
+    if not RACE_ID in Races.get_column('race_id'):
+        RACE_ID = Races.get_random_id()
+    categories = Races.get_categories(RACE_ID)
+    if not CATEGORY_NAME in categories:
+        CATEGORY_NAME = categories[0]
+    if not RACER_ID in Racers.get_column('RacerID'):
+        RACER_ID = Results.get_random_racer_id(RACE_ID, CATEGORY_NAME)
+
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
+    check_data_selection()
     # Get whichever fields were submitted - 2 out of 3 of these should be None
     name_date = request.form.get('name_date')
     category = request.form.get('category')
