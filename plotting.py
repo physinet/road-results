@@ -11,8 +11,13 @@ def make_racer_plot_alt(racer_table):
     """Plot each racer's rating over time using altair"""
 
     df = pd.DataFrame.from_records(racer_table, exclude=['_sa_instance_state'])
-    df['date'] = df['date'].dt.strftime('%m/%d/%y')
-    df['Place'] = df['Place'].astype(str) + ' / ' + df['num_racers'].astype(str)
+    df['date'] = df['date'].dt.strftime('%B %d, %Y')  #.strftime('%m/%d/%y')
+
+    dnf = df['Place'].isna()
+    df.loc[~dnf, 'place_string'] = \
+        df.loc[~dnf, 'Place'].astype(int).astype(str) \
+        + ' / ' + df.loc[~dnf, 'num_racers'].astype(str)
+    df.loc[dnf, 'place_string'] = 'DNF'
 
     # Add row for "zeroth" race - initial rating
     df.loc[len(df)] = 0  # row at the end
@@ -21,11 +26,12 @@ def make_racer_plot_alt(racer_table):
     df.loc[0, 'sigma'] = df.loc[1, 'prior_sigma']
     df.loc[0, 'RaceName'] = 'Initial Rating'
     df.loc[0, 'Place'] = 'n/a'
+    df.loc[0, 'place_string'] = 'n/a'
 
     df['mu+sigma'] = df['mu'] + df['sigma']
     df['mu-sigma'] = df['mu'] - df['sigma']
 
-    df = df.rename(columns={'RaceName': 'Race Name'})
+    df = df.rename(columns={'RaceName': 'Race Name', 'date': 'Date'})
     df = df.reset_index()  # Replace "index" column with index of df
 
     scalex = alt.Scale(domain=[df.index.min(), df.index.max()],
@@ -38,7 +44,7 @@ def make_racer_plot_alt(racer_table):
                 scale=scalex,
                 axis=alt.Axis(tickMinStep=1, grid=False)),
         y=alt.Y('mu', title='Rating', scale=scaley, axis=alt.Axis(grid=False)),
-        tooltip=['Race Name', 'Place']
+        tooltip=['Race Name', 'Date', 'place_string']
     )
 
     mu = mu.mark_line(color='black') + mu.mark_point(color='black')
@@ -54,6 +60,8 @@ def make_racer_plot_alt(racer_table):
     chart = chart.configure_axis(
         labelFontSize=16,
         titleFontSize=20
-    ).properties(width=600, height=300, background="transparent")
+    ).properties(width=600, height=300, background="transparent"
+    ).interactive(bind_y=False
+    )
 
     return chart.to_json()

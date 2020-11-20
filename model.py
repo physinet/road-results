@@ -351,6 +351,7 @@ def get_all_ratings(debug_limit=None):
     print(f'Made groupby: {time.time() - time0}') # 8s for full dataset
 
     # Warning... this will hog memory!
+    # Entire dataset took nearly 3 hours
     for (race_id, category), results in groups:  # ~30s delay to fetch and start
         print(f'Rating race {race_id} category {category}')
         results = list(results)
@@ -398,8 +399,8 @@ def get_all_ratings(debug_limit=None):
 
         print(f'Elapsed time: {time.time() - time0}')
 
-    # Committing can take ~15 seconds with entire dataset, regardless
-    # of how many rows were updated
+    # Committing took ~15 seconds when stopping entire dataset early, but
+    # was instant when done after rating the whole dataset
     time0 = time.time()
     db.session.flush()
     db.session.commit()
