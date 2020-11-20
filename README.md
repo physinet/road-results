@@ -12,23 +12,26 @@ Viewing by racer, you can see how each racer's rating changes over time.
 # Architecture
 This project combines an assortment of techniques new to the author, each explained briefly below.
 
-Details to be added...
-
 ## Web scraping
+Results for over 12,000 bike races are available at URLs like https://results.bikereg.com/race/11456,
+where the race ID number ranges from 1-12649 (as of November 2020).
+I use [`requests_futures`](https://pypi.org/project/requests-futures/) to asynchronously obtain the text of these webpages (`scraping.get_futures`) and use [regular expressions](https://docs.python.org/3/library/re.html) to extract the name, date, and location for each race (`scraping.scrape_race_page`).
+Hidden within each of these pages is a link to a JSON file containing the results for that race.
+I again use `requests_futures` to download the contents of these JSON files (`scraping.get_results_futures`) and convert them into Python dictionaries (`scraping.scrape_results_json`).
+
 ## Database
 The relevant data for this project are stored in a PostgreSQL database hosted on [AWS](https://aws.amazon.com/rds/) with three tables:
 - `Races`: Each row corresponds to one race event identified by a unique `race_id`. This table stores the relevant metadata for each race, including its name, date, location, list of race categories, and the number of racers competing in each category.
 - `Racers`: Each row corresponds to one racer identified by a unique `RacerID`. This table primarily stores the racer's name and current skill rating (parameterized by a mean skill rating `mu` and uncertainty `sigma`). The ratings in this table are updated upon processing each additional race.
 - `Results`: Each row corresponds to one result: the finishing place for one racer in one category of one race, along with the corresponding ID numbers for each. This table also records the skill rating of each racer both prior to (`prior_mu`, `prior_sigma`) and as a result of (`mu`, `sigma`) the race outcome.
 
-In `model.py`, I represent the tables using [SQLAlchemy](https://docs.sqlalchemy.org/en/13/orm/tutorial.html) classes. Each class has its own helper functions to query the database,
-and there are additional functions defined in `model.py` to apply the rating system
-to the database and collect data relevant for the website.
+In `model.py`, I represent the tables using [SQLAlchemy](https://docs.sqlalchemy.org/en/13/orm/tutorial.html) classes. There are a variety of helper functions defined here to query and update the database.
 
 ## TrueSkill
-I have adapted the Python implementation of [TrueSkill](https://trueskill.org/) to determine skill ratings for the racers represented in the dataset. TrueSkill takes a list of skill ratings ordered by final placing and updates each of the ratings accordingly. For more information, please see [this article](http://www.moserware.com/assets/computing-your-skill/The%20Math%20Behind%20TrueSkill.pdf).
+I have adapted the Python implementation of [TrueSkill](https://trueskill.org/) to determine skill ratings for the racers represented in the dataset. This algorithm compares the skill ratings of racers involved in each race and evaluates the final results considering its prior knowledge of each racer's relative skill. For more information about how the algorithm works, please see [this article](http://www.moserware.com/assets/computing-your-skill/The%20Math%20Behind%20TrueSkill.pdf).
 
-`results.py` defines the default parameters used for the TrueSkill algorithm and defines a function that applies TrueSkill to a list of rows of the `Results` table and updates the rows with the new ratings.
+While the mathematics behind TrueSkill are relatively complex, updating ratings is straightforward: TrueSkill receives a list of the skill ratings as input and returns a list of updated ratings.
+`results.get_all_ratings` iterates through each category of each race in chronological order and applies TrueSkill (`results.run_trueskill`) to all placing racers. `results.get_predicted_places` predicts the finishing place for a group of racers by ordering their ratings - the racer with the highest rating is predicted to finish in 1st place, and so on.
 
 ## Website
 The website is a [Flask](https://flask.palletsprojects.com/en/1.1.x/) application deployed on [Heroku](https://www.heroku.com/) with a single user-facing webpage.
