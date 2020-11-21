@@ -1,20 +1,56 @@
+import dill
 import os
+import glob
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
+from flask_wtf import FlaskForm
 from flask_wtf.csrf import CSRFProtect
+from wtforms import SelectField, SubmitField, StringField, validators
+from wtforms.validators import AnyOf
+import pandas as pd
+
 
 import commands
 import database
-import scraping
 import model
-import ratings
-import evaluation
-import plotting
 from model import Results, Races, Racers
-from forms import RaceForm, CategoryForm, RacerForm
 
 from preprocess import clean
 
+from plotting import make_racer_plot_alt
+
+# constants to keep track of which race/racer info to show on the main page
+RACE_ID = 10000 #11557
+CATEGORY_NAME = 'Men Collegiate CAT A'
+RACER_ID = 9915  #177974
+SCROLL = ''
+
+
+class RaceForm(FlaskForm):
+    name_date = StringField('name_date', id='name_date')
+    submit = SubmitField('Show me this race!', id='race_name_submit')
+
+    def __init__(self, race_names, *args, **kwargs):
+        super(RaceForm, self).__init__(*args, **kwargs)
+        self.name_date.validators = [AnyOf(race_names,
+            message=f'Can\'t find a race by the name {self.name_date.data}!\n')]
+
+class CategoryForm(FlaskForm):
+    category = SelectField('Category', id='category')
+    submit = SubmitField('Show me this category!', id='category_submit')
+
+    def __init__(self, categories, *args, **kwargs):
+        super(CategoryForm, self).__init__(*args, **kwargs)
+        self.category.choices = categories
+
+class RacerForm(FlaskForm):
+    racer_name = StringField('racer_name', id='racer_name')
+    submit = SubmitField('Show me this racer!', id='racer_name_submit')
+
+    def __init__(self, racer_names, *args, **kwargs):
+        super(RacerForm, self).__init__(*args, **kwargs)
+        self.racer_name.validators = [AnyOf(racer_names,
+            message=f'Can\'t find a racer by the name {self.racer_name.data}!\n')]
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
@@ -24,85 +60,49 @@ database.init_app(app)
 commands.init_app(app)
 
 
-# global variables to keep track of which race/racer info to show
-RACE_ID = 5291 # 10000 #11557
-CATEGORY_NAME = 'Men Collegiate Cat A'
-RACER_ID = 12150  # 9915  #177974
-SCROLL = ''
-
-
-def check_data_selection():
-    """Makes sure that we are trying to show data that is in the database."""
-
-    global RACE_ID, CATEGORY_NAME, RACER_ID
-
-    if not RACE_ID in Races.get_column('race_id'):
-        RACE_ID = Races.get_random_id()
-    categories = Races.get_categories(RACE_ID)
-    if not CATEGORY_NAME in categories:
-        CATEGORY_NAME = categories[0]
-    if not RACER_ID in Racers.get_column('RacerID'):
-        RACER_ID = Results.get_random_racer_id(RACE_ID, CATEGORY_NAME)
-
-
-
 @app.route('/', methods=['GET', 'POST'])
 def index_post():
     global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
 
-    check_data_selection()
-    # Get whichever fields were submitted - 2 out of 3 of these should be None
+    race_form = RaceForm(Races.get_race_names())
     name_date = request.form.get('name_date')
-    category = request.form.get('category')
-    racer_name = request.form.get('racer_name')
-
-    # Race form - update RACE_ID if valid name_date submitted
-    race_form = RaceForm(RACE_ID)
-    if race_form.validate_on_submit() and name_date:
+    if race_form.validate_on_submit():
         RACE_ID = Races.get_race_id(name_date)
 
-    # Category form - update CATEGORY_NAME with first category or selected cat
     categories = Races.get_categories(RACE_ID)
     category_form = CategoryForm(categories)
     if category_form.validate_on_submit():
-        CATEGORY_NAME = category
+        CATEGORY_NAME = request.form['category']
     elif CATEGORY_NAME.lower() not in [c.lower() for c in categories]:
         CATEGORY_NAME = categories[0]
 
-    # Racer form - update RACER_ID if valid racer name submitted
-    racer_form = RacerForm(RACER_ID)
-    if racer_form.validate_on_submit() and racer_name:
+    racer_form = RacerForm(Racers.get_racer_names())
+    racer_name = request.form.get('racer_name')
+    if racer_form.validate_on_submit():
         RACER_ID = Racers.get_racer_id(racer_name)
 
-    # Scroll to appropriate part of website depending on what field submitted
-    if name_date or category:
-        SCROLL = 'race'
-    elif racer_name:
+    if racer_name:
         SCROLL = 'racer'
+    elif name_date or category_form.validate_on_submit():
+        SCROLL = 'race'
 
-    # Reset data in form fields to show placeholder text again
-    race_form.reset_placeholder(RACE_ID)
-    racer_form.reset_placeholder(RACER_ID)
+    racer_url = f'https://results.bikereg.com/racer/{RACER_ID}'
 
     race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
     racer_table = model.get_racer_table(RACER_ID)
     racer_name = Racers.get_racer_name(RACER_ID)
 
-    counts = {table: eval(f'{table}.count()')
-                    for table in ['Races', 'Results', 'Racers']}
-
-    # chart = None
-    chart = plotting.make_racer_plot(racer_table)
+    chart = make_racer_plot_alt(racer_table)
 
     return render_template('index.html',
                            race_form=race_form,
                            category_form=category_form,
                            racer_form=racer_form,
                            scroll=SCROLL,
+                           racer_url=racer_url,
                            race_table=race_table,
                            racer_table=racer_table,
                            racer_name=racer_name,
-                           counts=counts,
                            chart=chart)
 
 
@@ -120,63 +120,84 @@ def race_suggestions(box):
     return jsonify({"suggestions": suggestions[:5]})
 
 
+@app.route('/map')
+def create_map():
+    return render_template('map.html')
+
+
 @app.route('/database')
 def preview_database(methods=['GET', 'POST']):
+    if request.args.get('drop'):
+        commands.db_drop_all()
+        commands.db_create_all()
 
-    def parse_tables(tables_string):
-        """Takes a string of table names (e.g. "Races,Results") and returns
-        a list of table objects. If tables_string is True, will return a list
-        containing all table objects.
-        """
-        _tables = {'Races': Races, 'Results': Results, 'Racers': Racers}
+    if request.args.get('add'):
+        if Results.query.count() > 0:
+            raise Exception('Rows exist in Results table. Can\'t add!')
+        df = pd.read_pickle('C:/data/results/df.pkl')
+        model.Races.add_from_df(df)
+        model.add_table_results()
+        model.filter_races()
 
-        tables = []
-        if tables_string == 'True':
-            tables = [Results, Races, Racers]
-        elif tables_string:
-            tables = [Table for name, Table in _tables.items()
-                        if name in tables_string.split(',')]
+    if request.args.get('rate'):
+        model.get_all_ratings()
 
-        return tables
+    if request.args.get('filter'):
+        model.filter_races()
 
-    if app.config.get('DB_WRITE_ACCESS'):
-        drop_tables = parse_tables(request.args.get('drop'))
-        commands.db_drop_all(drop_tables)
-        commands.db_create_all(drop_tables)
+    if request.args.get('table'):
+        Table = eval(request.args.get('table'))
+    else:
+        Table = Results
+    queries = Table.query.order_by(Table.index)
 
-        add_tables = parse_tables(request.args.get('add'))
+    if Table == Races:
+        queries = queries.filter(Table.index > 10000) # for troubleshooting
 
-        if Races in add_tables:
-            subset = request.args.get('subset')
-            if subset: # format '#,###'
-                race_ids = list(range(*map(int, subset.split(','))))
-            else:
-                race_ids = list(range(1, 13000))
-            Races.add_table(race_ids)
-        if Results in add_tables:
-            Results.add_table(Races.get_urls())
-        if Racers in add_tables:
-            Racers.add_table()
+    queries = queries.limit(2000)
 
-        if request.args.get('reset'):
-            ratings.reset_ratings()
-        if request.args.get('rate'):
-            ratings.get_all_ratings(request.args.get('limit'))
+    cols = Table.__table__.columns.keys()
 
-    # Table is the appropriate class (default Results if no table param)
-    Table = eval(str(request.args.get('table'))) or Results
-
-    rows = Table.get_sample(2000, start=(request.args.get('start') or 0))
-    cols = Table.get_columns()
-
-    return render_template('database.html', cols=cols, rows=rows)
+    return render_template('database.html', cols=cols,
+                           data=[q.__dict__ for q in queries])
 
 
-@app.route('/evaluation')
-def accuracy():
-    # evaluation.accuracy()
-    plotting.plot_hist()
-    return render_template('evaluation.html')
+@app.route('/race')
+def display_single_race(methods=['GET', 'POST']):
+    race_id = request.args.get('id')
+    if not race_id:
+        race_id = 10000
+    race_id = int(race_id)
+
+    category_idx = request.args.get('cat')  # an index for which category
+    if not category_idx:
+        category_idx = 0
+    category_idx = int(category_idx)
+
+    categories = Races.get_categories(race_id)
+    if category_idx >= len(categories):
+        category_idx = 0
+
+    race_table = Results.get_race_table(race_id, categories[category_idx])
+
+    cols = Results.__table__.columns.keys()
+
+    return render_template('database.html', cols=cols,
+                            data=[q.__dict__ for q in race_table])
+
+@app.route('/racer')
+def display_single_racer(methods=['GET', 'POST']):
+    if 'id' in request.args:
+        racer_id = int(request.args.get('id'))
+    else:
+        racer_id = RACER_ID
+
+    racer_table = Results.get_racer_results(racer_id)
+
+    cols = Results.__table__.columns.keys()
+
+    return render_template('database.html', cols=cols,
+                            data=[q.__dict__ for q in racer_table])
 
 @app.after_request
 def add_header(r):

@@ -1,9 +1,6 @@
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-# Rating defaults
-MU = 25
-SIGMA = 25/3
 
 class Config(object):
     DEBUG = False
@@ -16,9 +13,8 @@ class Config(object):
 
 class ProductionConfig(Config):
     DEBUG = False
-    DB_WRITE_ACCESS = False
+
 
 class DevelopmentConfig(Config):
     ENV = "development"
     DEBUG = True
-    DB_WRITE_ACCESS = True
