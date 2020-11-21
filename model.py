@@ -16,6 +16,9 @@ from preprocess import clean
 import scraping
 import config
 
+RACER_NAMES = None
+RACE_NAMES = None
+
 class Model:
     def __init__(self, **entries):
         """Custom init to ignore keyword arguments not in the table schema."""
@@ -112,7 +115,6 @@ class Races(Model, db.Model):
     lng = db.Column(db.Float)
     categories = db.Column(db.ARRAY(db.String), default=list)
     num_racers = db.Column(db.ARRAY(db.Integer), default=list) # number of races per category
-    _race_names = None
 
     def __repr__(self):
         return f"Race: {self.race_id, self.name}"
@@ -150,11 +152,13 @@ class Races(Model, db.Model):
     def _get_race_names(cls):
         """Store a dictionary with keys corresponding to a name - date
            string and values equal to the correpsonding race ids."""
-        if not cls._race_names:
-            cls._race_names = {'{} ({})'.format(race.name,
-                                   race.date.strftime('%Y-%m-%d')): race.race_id
-                                  for race in cls.query.distinct().all()}
-        return cls._race_names
+        global RACE_NAMES
+
+        if not RACE_NAMES:
+            RACE_NAMES = {'{} ({})'.format(race.name,
+                           race.date.strftime('%Y-%m-%d')): race.race_id
+                           for race in cls.query.distinct().all()}
+        return RACE_NAMES
 
     @classmethod
     def get_race_name_date(cls, race_id):
@@ -191,7 +195,6 @@ class Racers(Model, db.Model):
     mu = db.Column(db.Float, default=config.MU)
     sigma = db.Column(db.Float, default=config.SIGMA)
     num_races = db.Column(db.Integer, default=1)
-    _racer_names = None
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
@@ -228,10 +231,13 @@ class Racers(Model, db.Model):
     def _get_racer_names(cls):
         """Store a dictionary with keys corresponding to racer names
             and values equal to the correpsonding race ids."""
-        if not cls._racer_names:
-            cls._racer_names = {racer.Name: racer.RacerID
-                                  for racer in cls.query.distinct().all()}
-        return cls._racer_names
+        global RACER_NAMES
+
+        if not RACER_NAMES:
+            RACER_NAMES = {racer.Name: racer.RacerID
+                           for racer in cls.query.distinct().all()}
+
+        return RACER_NAMES
 
 
     @classmethod

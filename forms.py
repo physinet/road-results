@@ -48,11 +48,13 @@ class RacerForm(FlaskForm):
         """
         super(RacerForm, self).__init__(*args, **kwargs)
         msg = f'Can\'t find a racer by the name {self.racer_name.data}!\n'
+
         self.racer_name.validators = [AnyOf(Racers.get_racer_names(),
                                             message=msg)]
         # Filter to transform empty string into the currently selected racer
         self.racer_name.filters = [lambda x: x or
                                    Racers.get_racer_name(RacerID)]
+
 
     def reset_placeholder(self, RacerID):
         """Clear form data and set placeholder text to the racer name

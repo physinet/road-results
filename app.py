@@ -23,6 +23,10 @@ csrf = CSRFProtect(app)
 database.init_app(app)
 commands.init_app(app)
 
+# Get lists of racer and race names - takes a few seconds for each
+with app.app_context():
+    Races._get_race_names()
+    Racers._get_racer_names()
 
 # global variables to keep track of which race/racer info to show
 RACE_ID = 5291 # 10000 #11557
