@@ -12,3 +12,4 @@ trueskill==0.4.5
 scipy==1.5.3
 altair==4.1.0
 mpmath==1.1.0
+requests_futures==0.9.1
