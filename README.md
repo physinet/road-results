@@ -4,10 +4,7 @@ This is a **working draft** of an application created by [Brian Schaefer](https:
 This project will be finalized by **December 1, 2020**. Until then, please excuse any shortcomings.
 
 BikeRank adopts the [TrueSkill™ Ranking System](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/) to [amateur road cycling races](https://results.bikereg.com/).
-View this project online at: http://bike-rank.herokuapp.com/ (may take a few seconds on first load).
-Here, you view ratings either by race or by racer.
-Viewing by race, you can see how the ratings are updated as a result of each individual race.
-Viewing by racer, you can see how each racer's rating changes over time.
+This project will eventually be viewable online at: http://bike-rank.herokuapp.com/. Currently, the time required to load the page (which involves querying an AWS-hosted database) is longer than the 30-second Heroku timeout. I am working diligently to fix this issue.
 
 # Architecture
 This project combines an assortment of techniques new to the author, each explained briefly below.
