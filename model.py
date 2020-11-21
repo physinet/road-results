@@ -258,6 +258,7 @@ class Results(Model, db.Model):
     mu = db.Column(db.Float, default=config.MU)
     sigma = db.Column(db.Float,  default=config.SIGMA)
     predicted_place = db.Column(db.Integer)
+    rated = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return f"Result: {self.index, self.race_id, self.RaceCategoryName, self.Name, self.Place}"

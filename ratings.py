@@ -62,20 +62,22 @@ def get_all_ratings(debug_limit=None):
         if not result_racer_tuples:
             continue  # empty list!
         placing_results, placing_racers = map(list, zip(*result_racer_tuples))
+        # print(f'Filter DNFs: {time.time() - time0}')
+
 
         # Rate using trueskill
         if len(placing_results) <= 1:  # don't rate uncontested races
             continue
         new_ratings = run_trueskill(placing_results)
+        # print(f'Run trueskill: {time.time() - time0}')
 
         # Update results and racers rows
         for result, racer, rating in zip(placing_results,
                                          placing_racers,
                                          new_ratings):
-            result.mu = rating.mu
-            result.sigma = rating.sigma
-            racer.mu = rating.mu
-            racer.sigma = rating.sigma
+            result.mu = racer.mu = rating.mu
+            result.sigma = racer.sigma = rating.sigma
+            result.rated = True
 
         print(f'Elapsed time: {time.time() - time0}')
 
@@ -100,7 +102,7 @@ def get_predicted_places(results):
 
 def reset_ratings():
     """Reset all ratings to default values."""
-    defaults = {'mu': env.mu, 'sigma': env.sigma,
+    defaults = {'mu': env.mu, 'sigma': env.sigma, 'rated': False,
                 'prior_mu': env.mu, 'prior_sigma': env.sigma}
     print('Resetting ratings in Results...')
     Results.query.update(defaults, synchronize_session=False)
@@ -123,8 +125,9 @@ def run_trueskill(results):
     # and consist of one rating. We then need to get the only element from the
     # returned list to access the updated ratings
     try:
-        new_ratings = env.rate([[env.Rating(result.prior_mu, result.prior_sigma)]
-                                for result in results])
+        new_ratings = env.rate([
+            [env.Rating(result.prior_mu, result.prior_sigma)]
+            for result in results])
         new_ratings = [rating[0] for rating in new_ratings]
     except FloatingPointError as e:
         import dill
