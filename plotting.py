@@ -1,13 +1,10 @@
-import numpy as np
-import os
-
 import pandas as pd
-from datetime import datetime
-
+import numpy as np
 import altair as alt
 
+import evaluation
 
-def make_racer_plot_alt(racer_table):
+def make_racer_plot(racer_table):
     """Plot each racer's rating over time using altair"""
 
     df = pd.DataFrame.from_records(racer_table, exclude=['_sa_instance_state'])
@@ -65,3 +62,11 @@ def make_racer_plot_alt(racer_table):
     )
 
     return chart.to_json()
+
+def plot_hist():
+    import matplotlib.pyplot as plt
+    hist, edges = evaluation.get_rating_hist()
+    print(hist)
+    fig, ax = plt.subplots()
+    ax.bar(edges[:-1], hist, width=np.diff(edges), edgecolor="black", align="edge")
+    fig.savefig('hist.png')

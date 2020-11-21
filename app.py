@@ -8,12 +8,13 @@ import database
 import scraping
 import model
 import ratings
+import evaluation
+import plotting
 from model import Results, Races, Racers
 from forms import RaceForm, CategoryForm, RacerForm
 
 from preprocess import clean
 
-from plotting import make_racer_plot_alt
 
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
@@ -91,7 +92,7 @@ def index_post():
                     for table in ['Races', 'Results', 'Racers']}
 
     # chart = None
-    chart = make_racer_plot_alt(racer_table)
+    chart = plotting.make_racer_plot(racer_table)
 
     return render_template('index.html',
                            race_form=race_form,
@@ -170,6 +171,12 @@ def preview_database(methods=['GET', 'POST']):
 
     return render_template('database.html', cols=cols, rows=rows)
 
+
+@app.route('/evaluation')
+def accuracy():
+    # evaluation.accuracy()
+    plotting.plot_hist()
+    return render_template('evaluation.html')
 
 @app.after_request
 def add_header(r):
