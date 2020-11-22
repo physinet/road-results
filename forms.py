@@ -30,7 +30,7 @@ class RaceForm(FlaskForm):
 
 
 class CategoryForm(FlaskForm):
-    category = SelectField('Category', id='category')
+    category = SelectField('Category: ', id='category')
     submit = SubmitField('Show me this category!', id='category_submit')
 
     def __init__(self, categories, *args, **kwargs):
