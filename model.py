@@ -17,9 +17,6 @@ from preprocess import clean
 import scraping
 import config
 
-RACER_NAMES = None
-RACE_NAMES = None
-
 class Model:
     def __init__(self, **entries):
         """Custom init to ignore keyword arguments not in the table schema."""
@@ -153,19 +150,6 @@ class Races(Model, db.Model):
                            cls.date == datetime.strptime(date, '%Y-%m-%d'))
                    .with_entities(cls.race_id)
                    .one()[0])
-        # return cls._get_race_names().get(name_date)
-
-    @classmethod
-    def _get_race_names(cls):
-        """Store a dictionary with keys corresponding to a name - date
-           string and values equal to the correpsonding race ids."""
-        global RACE_NAMES
-
-        if not RACE_NAMES:
-            RACE_NAMES = {'{} ({})'.format(race.name,
-                           race.date.strftime('%Y-%m-%d')): race.race_id
-                           for race in cls.query.distinct().all()}
-        return RACE_NAMES
 
     @classmethod
     def get_race_name_date(cls, race_id):
@@ -173,11 +157,6 @@ class Races(Model, db.Model):
         name, date = cls.query.filter(cls.race_id == race_id) \
                         .with_entities(cls.name, cls.date).one()
         return '{} ({})'.format(name, date.strftime('%Y-%m-%d'))
-
-    @classmethod
-    def get_race_names(cls):
-        """Return a list of the names of all races"""
-        return list(cls._get_race_names().keys())
 
     @classmethod
     def get_random_id(cls):

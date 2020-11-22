@@ -24,10 +24,8 @@ csrf = CSRFProtect(app)
 database.init_app(app)
 commands.init_app(app)
 
-# Some things to pre-compute
-
+# Pre-compute counts
 with app.app_context():
-    Races._get_race_names()
     COUNTS = {table: eval(f'{table}.count()')
                     for table in ['Races', 'Results', 'Racers']}
 print('App initialized.')
