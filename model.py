@@ -3,12 +3,13 @@ import glob
 import os
 import re
 import time
+from datetime import datetime
 import pandas as pd
-
 
 import sqlalchemy as sa
 from sqlalchemy import update, func
 from sqlalchemy.orm import synonym
+from wtforms.validators import ValidationError
 
 from database import db
 
@@ -112,7 +113,6 @@ class Races(Model, db.Model):
     lng = db.Column(db.Float)
     categories = db.Column(db.ARRAY(db.String), default=list)
     num_racers = db.Column(db.ARRAY(db.Integer), default=list) # number of races per category
-    _race_names = None
 
     def __repr__(self):
         return f"Race: {self.race_id, self.name}"
@@ -144,34 +144,33 @@ class Races(Model, db.Model):
         """Get the race id for the race with the given name_date
            (i.e., a key in the Races._race_names dictionary).
            Returns None for invalid name_date."""
-        return cls._get_race_names().get(name_date)
-
-    @classmethod
-    def _get_race_names(cls):
-        """Store a dictionary with keys corresponding to a name - date
-           string and values equal to the correpsonding race ids."""
-        if not cls._race_names:
-            cls._race_names = {'{} ({})'.format(race.name,
-                                   race.date.strftime('%Y-%m-%d')): race.race_id
-                                  for race in cls.query.distinct().all()}
-        return cls._race_names
+        name, date = re.search(r'(.*) \((.*)\)', name_date).groups()
+        return (cls.query
+                   .filter(cls.name == name,
+                           cls.date == datetime.strptime(date, '%Y-%m-%d'))
+                   .with_entities(cls.race_id)
+                   .one()[0])
 
     @classmethod
     def get_race_name_date(cls, race_id):
         """Get the name and date of the race with given race_id"""
-        name, date =  cls.query.filter(cls.race_id == race_id) \
-                         .with_entities(cls.name, cls.date).one()
+        name, date = cls.query.filter(cls.race_id == race_id) \
+                        .with_entities(cls.name, cls.date).one()
         return '{} ({})'.format(name, date.strftime('%Y-%m-%d'))
-
-    @classmethod
-    def get_race_names(cls):
-        """Return a list of the names of all races"""
-        return list(cls._get_race_names().keys())
 
     @classmethod
     def get_random_id(cls):
         """Get a random race_id in the table."""
         return cls.query.order_by(func.random()).first().race_id
+
+    @classmethod
+    def get_suggestions(cls, query, limit=5):
+        """Returns a list of race name suggestions based on a search query."""
+        suggestions = (cls.query
+                          .filter(func.lower(cls.name).like(f'%{query}%'))
+                          .limit(limit))
+        return ['{} ({})'.format(x.name, x.date.strftime('%Y-%m-%d'))
+                        for x in suggestions]
 
     @classmethod
     def get_urls(cls):
@@ -180,6 +179,19 @@ class Races(Model, db.Model):
                                            .with_entities(cls.json_url)
                                            .order_by(cls.race_id)
                                            .all()))
+
+    @classmethod
+    def validator(cls, form, field):
+        """FlaskForm validator that checks that the race name is valid."""
+        # HACK: filter was not being applied to the data for some reason...
+        data = field.filters[0](field.data)
+        name, date = re.search(r'(.*) \((.*)\)', data).groups()
+        if not (cls.query
+                   .filter(cls.name == name,
+                           cls.date == datetime.strptime(date, '%Y-%m-%d'))
+                   .all()):
+            msg = f'Can\'t find a race by the name {name}!\n'
+            raise ValidationError(msg)
 
 
 class Racers(Model, db.Model):
@@ -191,7 +203,6 @@ class Racers(Model, db.Model):
     mu = db.Column(db.Float, default=config.MU)
     sigma = db.Column(db.Float, default=config.SIGMA)
     num_races = db.Column(db.Integer, default=1)
-    _racer_names = None
 
     def __repr__(self):
         return f"Racer: {self.RacerID, self.Name, self.mu, self.sigma}"
@@ -212,10 +223,12 @@ class Racers(Model, db.Model):
 
     @classmethod
     def get_racer_id(cls, name):
-        """Get the race id for the given racer name
-           (i.e., a key in the Racers._racer_names dictionary).
-           Returns None for invalid racer name."""
-        return cls._get_racer_names().get(name)
+        """Get the racer id for the given racer name. Returns None for
+        invalid racer name.
+        """
+        return (cls.query.filter(cls.Name == name)
+                         .with_entities(cls.RacerID)
+                         .one()[0])
 
     @classmethod
     def get_racer_name(cls, RacerID):
@@ -225,19 +238,21 @@ class Racers(Model, db.Model):
 
 
     @classmethod
-    def _get_racer_names(cls):
-        """Store a dictionary with keys corresponding to racer names
-            and values equal to the correpsonding race ids."""
-        if not cls._racer_names:
-            cls._racer_names = {racer.Name: racer.RacerID
-                                  for racer in cls.query.distinct().all()}
-        return cls._racer_names
-
+    def get_suggestions(cls, query, limit=5):
+        """Returns a list of racer name suggestions based on a search query."""
+        suggestions = (cls.query
+                          .with_entities(cls.Name)
+                          .filter(func.lower(cls.Name).like(f'%{query}%'))
+                          .limit(limit))
+        return [x for x, in suggestions]  # unpack each 1-tuple
 
     @classmethod
-    def get_racer_names(cls):
-        """Returns a list of the names of all racers"""
-        return list(cls._get_racer_names().keys())
+    def validator(cls, form, field):
+        """FlaskForm validator that checks that the racer name is valid."""
+        racer_name = field.data
+        if not cls.query.filter(cls.Name == racer_name).all():
+            msg = f'Can\'t find a racer by the name {racer_name}!\n'
+            raise ValidationError(msg)
 
 
 class Results(Model, db.Model):

@@ -155,6 +155,7 @@
         <div class="col-lg-10 mx-auto text-center">
           <h2>Find a race</h2>
           Looking for a suggestion? Try searching for ".........." (or find one <a href="https://results.bikereg.com/?n=results&sn=all">here</a>).
+          <br>
           <div class="container text-center">
             <form method="POST">
               {{ race_form.csrf_token }}
@@ -172,28 +173,32 @@
               });
               </script>
             </form>
-            <form method="POST">
-              {{ category_form.csrf_token }}
-              {{ category_form.category }}
-              {{ category_form.submit }}
-            </form>
             {{ race_form.errors.get('name_date')[0] if 'name_date' in race_form.errors }}
           </div>
 
 
           <br>
           <h5 style="text-align: center">
-            {{ race_table[0]['RaceName'] }} • May 19, 2019
-            <br>
-            Category: {{ race_table[0]['RaceCategoryName'] }}
+            {{ race_table[0]['RaceName'] }} • May 19, 2019 • {{ race_table[0]['RaceCategoryName'] }}
           </h5>
+            <form class="form-horizontal" method="POST">
+                          <b>
+                            Select another category:
+                          </b>
+                          {{ category_form.csrf_token }}
+                          {{ category_form.category }}
+                          {{ category_form.submit }}
+                        </form>
+            <br>
+            DNF = "Did Not Finish"
+            <br>
             <div class="table" style="margin-bottom:300px;">
               <table class="table table-bordered table-sm table-hover table-scroll">
                 <thead class="thead-dark">
                   <tr>
                     <th style="text-align: center; width: 15%" scope="col">Name</th>
                     <th style="text-align: center; width: 25%" scope="col">Team</th>
-                    <th style="text-align: center; width: 10%" scope="col">Rating</th>
+                    <th style="text-align: center; width: 10%" scope="col">Prior Rating</th>
                     <th style="text-align: center; width: 10%" scope="col">Predicted Place</th>
                     <th style="text-align: center; width: 10%" scope="col">Actual Place</th>
                     <th style="text-align: center; width: 10%" scope="col">Adjusted Rating</th>
@@ -223,7 +228,13 @@
                     </td>
                     <td style="text-align: center; width: 10%;">
                       {% if row['Place'] is not none %}
+                        {% if row['mu'] - row['prior_mu'] > 0 %}
+                          <p style="color:green;">
+                        {% else %}
+                          <p style="color:red;">
+                        {% endif %}
                         {{ '%.2f, %.2f' | format(row['mu'] - row['prior_mu'], row['sigma'] - row['prior_sigma']) }}
+                        </p>
                       {% else %}
                         -
                       {% endif %}
@@ -234,8 +245,6 @@
               </table>
           </div>
         </div>
-        DNF = "Did Not Finish"
-
       </div>
     </section>
 
@@ -264,8 +273,11 @@
               </script>
             </form>
             {{ racer_form.errors.get('racer_name')[0] if 'racer_name' in racer_form.errors }}
+            <br>
+            DNF = "Did Not Finish"
         </div>
       </div>
+
       <div class="container">
         <div class="col-lg-10 mx-auto">
           <h5 style="text-align: center"><br>Race history for {{ racer_name }}:</h5>
@@ -301,7 +313,6 @@
             </table>
           </div>
         </div>
-        DNF = "Did Not Finish"
         <br>
         <div class="col-lg-8 mx-auto text-center">
           <div id='racer-plot'></div>

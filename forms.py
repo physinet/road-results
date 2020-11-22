@@ -6,7 +6,8 @@ from model import Results, Races, Racers
 
 
 class RaceForm(FlaskForm):
-    name_date = StringField('name_date', id='name_date')
+    name_date = StringField('name_date', id='name_date',
+                            validators=[Races.validator])
     submit = SubmitField('Show me this race!', id='race_name_submit')
 
     def __init__(self, race_id, *args, **kwargs):
@@ -14,8 +15,7 @@ class RaceForm(FlaskForm):
         the currently selected race.
         """
         super(RaceForm, self).__init__(*args, **kwargs)
-        msg = f'Can\'t find a race by the name {self.name_date.data}!\n'
-        self.name_date.validators = [AnyOf(Races.get_race_names(), message=msg)]
+
         # Filter to transform empty string into the currently selected race
         self.name_date.filters = [lambda x: x or
                                   Races.get_race_name_date(race_id)]
@@ -24,13 +24,14 @@ class RaceForm(FlaskForm):
         """Clear form data and set placeholder text to the race name
         corresponding to the given race_id."""
         if self.name_date.data == '':
-            self.name_date.errors.pop()  # don't show errors for empty string
+            if self.name_date.errors:
+                self.name_date.errors.pop()  # don't show errors for empty
         self.name_date.description = Races.get_race_name_date(race_id)
         self.name_date.data = ''
 
 
 class CategoryForm(FlaskForm):
-    category = SelectField('Category', id='category')
+    category = SelectField('Category: ', id='category')
     submit = SubmitField('Show me this category!', id='category_submit')
 
     def __init__(self, categories, *args, **kwargs):
@@ -38,7 +39,8 @@ class CategoryForm(FlaskForm):
         self.category.choices = categories
 
 class RacerForm(FlaskForm):
-    racer_name = StringField('racer_name', id='racer_name')
+    racer_name = StringField('racer_name', id='racer_name',
+                             validators=[Racers.validator])
             # Filter to transform empty string into the currently selected racer
     submit = SubmitField('Show me this racer!', id='racer_name_submit')
 
@@ -47,12 +49,11 @@ class RacerForm(FlaskForm):
         the currently selected racer.
         """
         super(RacerForm, self).__init__(*args, **kwargs)
-        msg = f'Can\'t find a racer by the name {self.racer_name.data}!\n'
-        self.racer_name.validators = [AnyOf(Racers.get_racer_names(),
-                                            message=msg)]
+
         # Filter to transform empty string into the currently selected racer
         self.racer_name.filters = [lambda x: x or
                                    Racers.get_racer_name(RacerID)]
+
 
     def reset_placeholder(self, RacerID):
         """Clear form data and set placeholder text to the racer name
