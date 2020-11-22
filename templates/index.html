@@ -179,11 +179,11 @@
 
           <br>
           <h5 style="text-align: center">
-            {{ race_table[0]['RaceName'] }} • May 19, 2019
+            {{ race_table[0]['RaceName'] }} • May 19, 2019 • {{ race_table[0]['RaceCategoryName'] }}
           </h5>
             <form class="form-horizontal" method="POST">
                           <b>
-                            {{ category_form.category.label.text }}
+                            Select another category:
                           </b>
                           {{ category_form.csrf_token }}
                           {{ category_form.category }}

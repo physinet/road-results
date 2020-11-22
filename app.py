@@ -31,14 +31,13 @@ with app.app_context():
     Racers._get_racer_names()
     COUNTS = {table: eval(f'{table}.count()')
                     for table in ['Races', 'Results', 'Racers']}
-
+print('App initialized.')
 
 # global variables to keep track of which race/racer info to show
 RACE_ID = 5291 # 10000 #11557
 CATEGORY_NAME = 'Men Collegiate Cat A'
 RACER_ID = 12150  # 9915  #177974
 SCROLL = ''
-
 
 def check_data_selection():
     """Makes sure that we are trying to show data that is in the database."""
@@ -119,13 +118,15 @@ def race_suggestions(box):
     """Create search suggestions when searching races or racers"""
 
     if box == 'race_name':
-        options = Races.get_race_names()
+        Table = Races
     elif box == 'racer_name':
-        options = Racers.get_racer_names()
+        Table = Racers
+
     query = request.args.get('query').lower()
-    suggestions = [{'value': option} for option in options
-                                   if query in option.lower()]
-    return jsonify({"suggestions": suggestions[:5]})
+    suggestions = [{'value': option} for option in
+                    Table.get_suggestions(query)[:5]]
+
+    return jsonify({"suggestions": suggestions})
 
 
 @app.route('/database')

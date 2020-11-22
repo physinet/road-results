@@ -178,6 +178,12 @@ class Races(Model, db.Model):
         return cls.query.order_by(func.random()).first().race_id
 
     @classmethod
+    def get_suggestions(cls, query):
+        """Returns a list of race name suggestions based on a search query."""
+        options = cls.get_race_names()
+        return [option for option in options if query in option.lower()]
+
+    @classmethod
     def get_urls(cls):
         """Return a list of JSON results file URLs"""
         return list(map(lambda x: x[0], cls.query
@@ -244,6 +250,12 @@ class Racers(Model, db.Model):
     def get_racer_names(cls):
         """Returns a list of the names of all racers"""
         return list(cls._get_racer_names().keys())
+
+    @classmethod
+    def get_suggestions(cls, query):
+        """Returns a list of racer name suggestions based on a search query."""
+        options = cls.get_racer_names()
+        return [option for option in options if query in option.lower()]
 
 
 class Results(Model, db.Model):
