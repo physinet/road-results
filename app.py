@@ -1,4 +1,5 @@
 import os
+import time
 
 from flask import Flask, render_template, request, jsonify
 from flask_wtf.csrf import CSRFProtect
@@ -23,10 +24,14 @@ csrf = CSRFProtect(app)
 database.init_app(app)
 commands.init_app(app)
 
-# Get lists of racer and race names - takes a few seconds for each
+# Some things to pre-compute
+
 with app.app_context():
     Races._get_race_names()
     Racers._get_racer_names()
+    COUNTS = {table: eval(f'{table}.count()')
+                    for table in ['Races', 'Results', 'Racers']}
+
 
 # global variables to keep track of which race/racer info to show
 RACE_ID = 5291 # 10000 #11557
@@ -52,7 +57,7 @@ def check_data_selection():
 
 @app.route('/', methods=['GET', 'POST'])
 def index_post():
-    global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL
+    global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL, COUNTS
 
     check_data_selection()
     # Get whichever fields were submitted - 2 out of 3 of these should be None
@@ -88,17 +93,14 @@ def index_post():
     race_form.reset_placeholder(RACE_ID)
     racer_form.reset_placeholder(RACER_ID)
 
-    race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME)
+    race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME).all()
     racer_table = model.get_racer_table(RACER_ID)
     racer_name = Racers.get_racer_name(RACER_ID)
-
-    counts = {table: eval(f'{table}.count()')
-                    for table in ['Races', 'Results', 'Racers']}
 
     # chart = None
     chart = plotting.make_racer_plot(racer_table)
 
-    return render_template('index.html',
+    r = render_template('index.html',
                            race_form=race_form,
                            category_form=category_form,
                            racer_form=racer_form,
@@ -106,8 +108,10 @@ def index_post():
                            race_table=race_table,
                            racer_table=racer_table,
                            racer_name=racer_name,
-                           counts=counts,
+                           counts=COUNTS,
                            chart=chart)
+
+    return r
 
 
 @app.route("/search/<string:box>")
