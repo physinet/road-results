@@ -3,12 +3,13 @@ import glob
 import os
 import re
 import time
+from datetime import datetime
 import pandas as pd
-
 
 import sqlalchemy as sa
 from sqlalchemy import update, func
 from sqlalchemy.orm import synonym
+from wtforms.validators import ValidationError
 
 from database import db
 
@@ -146,7 +147,13 @@ class Races(Model, db.Model):
         """Get the race id for the race with the given name_date
            (i.e., a key in the Races._race_names dictionary).
            Returns None for invalid name_date."""
-        return cls._get_race_names().get(name_date)
+        name, date = re.search(r'(.*) \((.*)\)', name_date).groups()
+        return (cls.query
+                   .filter(cls.name == name,
+                           cls.date == datetime.strptime(date, '%Y-%m-%d'))
+                   .with_entities(cls.race_id)
+                   .one()[0])
+        # return cls._get_race_names().get(name_date)
 
     @classmethod
     def _get_race_names(cls):
@@ -163,8 +170,8 @@ class Races(Model, db.Model):
     @classmethod
     def get_race_name_date(cls, race_id):
         """Get the name and date of the race with given race_id"""
-        name, date =  cls.query.filter(cls.race_id == race_id) \
-                         .with_entities(cls.name, cls.date).one()
+        name, date = cls.query.filter(cls.race_id == race_id) \
+                        .with_entities(cls.name, cls.date).one()
         return '{} ({})'.format(name, date.strftime('%Y-%m-%d'))
 
     @classmethod
@@ -178,10 +185,13 @@ class Races(Model, db.Model):
         return cls.query.order_by(func.random()).first().race_id
 
     @classmethod
-    def get_suggestions(cls, query):
+    def get_suggestions(cls, query, limit=5):
         """Returns a list of race name suggestions based on a search query."""
-        options = cls.get_race_names()
-        return [option for option in options if query in option.lower()]
+        suggestions = (cls.query
+                          .filter(func.lower(cls.name).like(f'%{query}%'))
+                          .limit(limit))
+        return ['{} ({})'.format(x.name, x.date.strftime('%Y-%m-%d'))
+                        for x in suggestions]
 
     @classmethod
     def get_urls(cls):
@@ -190,6 +200,19 @@ class Races(Model, db.Model):
                                            .with_entities(cls.json_url)
                                            .order_by(cls.race_id)
                                            .all()))
+
+    @classmethod
+    def validator(cls, form, field):
+        """FlaskForm validator that checks that the race name is valid."""
+        # HACK: filter was not being applied to the data for some reason...
+        data = field.filters[0](field.data)
+        name, date = re.search(r'(.*) \((.*)\)', data).groups()
+        if not (cls.query
+                   .filter(cls.name == name,
+                           cls.date == datetime.strptime(date, '%Y-%m-%d'))
+                   .all()):
+            msg = f'Can\'t find a race by the name {name}!\n'
+            raise ValidationError(msg)
 
 
 class Racers(Model, db.Model):
@@ -221,10 +244,12 @@ class Racers(Model, db.Model):
 
     @classmethod
     def get_racer_id(cls, name):
-        """Get the race id for the given racer name
-           (i.e., a key in the Racers._racer_names dictionary).
-           Returns None for invalid racer name."""
-        return cls._get_racer_names().get(name)
+        """Get the racer id for the given racer name. Returns None for
+        invalid racer name.
+        """
+        return (cls.query.filter(cls.Name == name)
+                         .with_entities(cls.RacerID)
+                         .one()[0])
 
     @classmethod
     def get_racer_name(cls, RacerID):
@@ -234,28 +259,21 @@ class Racers(Model, db.Model):
 
 
     @classmethod
-    def _get_racer_names(cls):
-        """Store a dictionary with keys corresponding to racer names
-            and values equal to the correpsonding race ids."""
-        global RACER_NAMES
-
-        if not RACER_NAMES:
-            RACER_NAMES = {racer.Name: racer.RacerID
-                           for racer in cls.query.distinct().all()}
-
-        return RACER_NAMES
-
-
-    @classmethod
-    def get_racer_names(cls):
-        """Returns a list of the names of all racers"""
-        return list(cls._get_racer_names().keys())
-
-    @classmethod
-    def get_suggestions(cls, query):
+    def get_suggestions(cls, query, limit=5):
         """Returns a list of racer name suggestions based on a search query."""
-        options = cls.get_racer_names()
-        return [option for option in options if query in option.lower()]
+        suggestions = (cls.query
+                          .with_entities(cls.Name)
+                          .filter(func.lower(cls.Name).like(f'%{query}%'))
+                          .limit(limit))
+        return [x for x, in suggestions]  # unpack each 1-tuple
+
+    @classmethod
+    def validator(cls, form, field):
+        """FlaskForm validator that checks that the racer name is valid."""
+        racer_name = field.data
+        if not cls.query.filter(cls.Name == racer_name).all():
+            msg = f'Can\'t find a racer by the name {racer_name}!\n'
+            raise ValidationError(msg)
 
 
 class Results(Model, db.Model):

@@ -28,7 +28,6 @@ commands.init_app(app)
 
 with app.app_context():
     Races._get_race_names()
-    Racers._get_racer_names()
     COUNTS = {table: eval(f'{table}.count()')
                     for table in ['Races', 'Results', 'Racers']}
 print('App initialized.')
@@ -124,7 +123,7 @@ def race_suggestions(box):
 
     query = request.args.get('query').lower()
     suggestions = [{'value': option} for option in
-                    Table.get_suggestions(query)[:5]]
+                    Table.get_suggestions(query, limit=5)]
 
     return jsonify({"suggestions": suggestions})
 
