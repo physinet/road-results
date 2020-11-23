@@ -242,6 +242,15 @@ class Racers(Model, db.Model):
         cls.add(rows)
 
     @classmethod
+    def get_avg_rating(cls):
+        """Get the average skill rating for racers that have been rated at
+        least once (i.e. they don't have the default rating of exactly 25).
+        """
+        racers = cls.query.filter(cls.mu != 25).all()
+        mus = [racer.mu for racer in racers]
+        return sum(mus) / len(mus)
+
+    @classmethod
     def get_racer_id(cls, name):
         """Get the racer id for the given racer name. Returns None for
         invalid racer name.

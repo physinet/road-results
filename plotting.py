@@ -4,8 +4,10 @@ import altair as alt
 
 import evaluation
 
-def make_racer_plot(racer_table):
-    """Plot each racer's rating over time using altair"""
+def make_racer_plot(racer_table, avg=25):
+    """Plot each racer's rating over time using altair. Avg = average rating
+    to plot as a dashed line.
+    """
 
     df = pd.DataFrame.from_records(racer_table, exclude=['_sa_instance_state'])
     df['date'] = df['date'].dt.strftime('%B %d, %Y')  #.strftime('%m/%d/%y')
@@ -27,6 +29,7 @@ def make_racer_plot(racer_table):
 
     df['mu+sigma'] = df['mu'] + df['sigma']
     df['mu-sigma'] = df['mu'] - df['sigma']
+    df['avg'] = avg
 
     df = df.rename(columns={'RaceName': 'Race Name', 'date': 'Date'})
     df = df.reset_index()  # Replace "index" column with index of df
@@ -52,14 +55,20 @@ def make_racer_plot(racer_table):
         y2='mu-sigma'
     ).mark_area(opacity=0.3)
 
-    chart = sigma + mu
+    df_avg = pd.DataFrame({'x': [-100, 10000], 'y': [avg, avg]})
+
+    avg_rating = alt.Chart(df_avg) \
+                    .mark_line(strokeDash=[10, 10], color='#444444') \
+                    .encode(x=alt.X('x', scale=scalex),
+                            y=alt.Y('y', scale=scaley))
+
+    chart = avg_rating + sigma + mu
 
     chart = chart.configure_axis(
-        labelFontSize=16,
-        titleFontSize=20
-    ).properties(width=600, height=300, background="transparent"
-    ).interactive(bind_y=False
-    )
+                    labelFontSize=16,
+                    titleFontSize=20) \
+                 .properties(width=600, height=300, background="transparent") \
+                 .interactive(bind_y=False)
 
     return chart.to_json()
 

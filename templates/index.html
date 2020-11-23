@@ -147,7 +147,7 @@
 
     <section id="race">
       <div class="container">
-        <div class="col-lg-8 mx-auto">
+        <div class="col-lg-10 mx-auto">
           <h2 style="text-align:center;">Find a race</h2>
           Find a race using the search box below. Unfamiliar with bike racing? Try these suggestions:
           <ul>
@@ -193,20 +193,6 @@
                           {{ category_form.category }}
                           {{ category_form.submit }}
                         </form>
-
-          <div class="col-lg-8 mx-auto">
-            <br>
-            <ul>
-              <li>The table shows the final results from the selected race, in order of final finishing place (DNF = "Did Not Finish").</li>
-              <li>The skill ratings for each racer are represented as an average rating ± ("plus or minus") some uncertainty in that rating.</li>
-              <li>The ratings prior to the race ("Prior Rating") can be used to predict the outcome of the race—the racer with the highest average skill rating is most likely to win, and so on.</li>
-              <li>If a racer has not yet competed in the race, they are assigned an initial rating, represented in <i>(parenthesized italics)</i>.</li>
-              <li>The Adjusted Rating is the result of applying the <a class="js-scroll-trigger" href="#trueskill">rating system</a> to the results</li>
-              <li>The change in rating does not directly reflect the difference between predicted and actual place, but instead accounts for the performance of each racer relative to the historical performance of <i>all other</i> racers.</li>
-            </ul>
-            <br>
-            <br>
-          </div>
 
           <div class="col-lg-10 mx-auto text-center">
             <div class="table" style="margin-bottom:300px;">
@@ -268,15 +254,29 @@
               </table>
           </div>
         </div>
+        <div class="col-lg-10 mx-auto">
+          <br>
+          <b>What's in this table?</b>
+          <ul>
+            <li>The table shows the final results from the selected race, in order of final finishing place (DNF = "Did Not Finish").</li>
+            <li>The skill ratings for each racer are represented as an average rating ± ("plus or minus") some uncertainty in that rating.</li>
+            <li>The ratings prior to the race ("Prior Rating") can be used to predict the outcome of the race—the racer with the highest average skill rating is most likely to win, and so on.</li>
+            <li>If a racer has not yet competed in the race, they are assigned an initial rating, represented in <i>(parenthesized italics)</i>.</li>
+            <li>The Adjusted Rating is the result of applying the <a class="js-scroll-trigger" href="#trueskill">rating system</a> to the results</li>
+            <li>The change in rating does not directly reflect the difference between predicted and actual place, but instead accounts for the performance of each racer relative to the historical performance of <i>all other</i> racers.</li>
+          </ul>
+          <br>
+          <br>
+        </div>
       </div>
     </section>
 
   <section id="racer"   class="bg-light">
     <div class="container">
       <div class="row">
-        <div class="col-lg-8 mx-auto">
-          <h2>Find a racer</h2>
-          Find a racer using the search box below. Don't know any cyclists? Shame on you. But feel free to try these suggestions:
+        <div class="col-lg-10 mx-auto">
+          <h2 style="text-align:center;">Find a racer</h2>
+          Find a racer using the search box below. Don't know any cyclists? Shame on you. Try one of these:
           <ul>
             <li>Brian Schaefer (the author)</li>
             <li>Jeremy Powers</li>
@@ -303,59 +303,63 @@
               </script>
             </form>
           </div>
-            <br>
-            <div class="col-lg-8 mx-auto">
-              <br>
-              <ul>
-                <li>The following table shows a record of races finished by the selected racer (DNF = "Did Not Finish"), in reverse chronological order.</li>
-                <li>The chart below shows how the racer's average skill rating (connected black circles) and skill uncertainty (blue shading) has changed from race to race.</li>
-                <li>Hover over the markers to identify the corresponding race, and use the scroll wheel to zoom in.</li>
-              </ul>
-              <br>
-              <br>
-            </div>
+        <br>
+        <div class="col-lg-10 mx-auto">
+          <br>
+          The following table shows a record of races finished by the selected racer (DNF = "Did Not Finish"), in reverse chronological order.</li>
+          <br>
+          <br>
         </div>
 
-      </div>
-
-      <div class="container">
-        <div class="col-lg-10 mx-auto">
-          <h5 style="text-align: center"><br>Race history for {{ racer_name }}:</h5>
-          <div class="table-responsive" style="margin-bottom:400px;">
-            <table class="table table-bordered table-sm table-hover table-scroll">
-              <thead class="thead-dark">
-                <tr>
-                  <th style="text-align: center; width: 10%" scope="col">#</th>
-                  <th style="text-align: center; width: 20%" scope="col">Date</th>
-                  <th style="text-align: center; width: 30%" scope="col">Race Name</th>
-                  <th style="text-align: center; width: 20%" scope="col">Category</th>
-                  <th style="text-align: center; width: 10%" scope="col">Place</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for row in racer_table[::-1] %}
-                <tr>
-                  <th style="text-align: center; width: 10%;" scope="row">{{ racer_table|length + 1 - loop.index }}</th>
-                  <th style="text-align: center; width: 20%;" scope="row">{{ row['date'].strftime('%B %d, %Y') }}</th>
-                  <td style="width: 30%;">{{ row['RaceName'] }}</td>
-                  <td style="width: 20%;">{{ row['RaceCategoryName'] }}</td>
-                  <td style="text-align: center; width: 10%;">{{ '{}/{}'.format(row['Place'], row['num_racers']) if row['Place'] else 'DNF' }}</td>
-                </tr>
-                {% endfor %}
-                <!-- <tr>
-                  <th style="text-align: center; width: 10%;" scope="row">-</th>
-                  <th style="text-align: center; width: 20%;" scope="row">-</th>
-                  <td style="width: 30%;">Initial rating</td>
-                  <td style="width: 20%;"></td>
-                  <td style="text-align: center; width: 10%;"></td>
-                </tr> -->
-              </tbody>
-            </table>
+        <div class="container">
+          <div class="col-lg-10 mx-auto">
+            <h5 style="text-align: center"><br>Race history for {{ racer_name }}:</h5>
+            <div class="table-responsive" style="margin-bottom:400px;">
+              <table class="table table-bordered table-sm table-hover table-scroll">
+                <thead class="thead-dark">
+                  <tr>
+                    <th style="text-align: center; width: 10%" scope="col">#</th>
+                    <th style="text-align: center; width: 20%" scope="col">Date</th>
+                    <th style="text-align: center; width: 30%" scope="col">Race Name</th>
+                    <th style="text-align: center; width: 20%" scope="col">Category</th>
+                    <th style="text-align: center; width: 10%" scope="col">Place</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for row in racer_table[::-1] %}
+                  <tr>
+                    <th style="text-align: center; width: 10%;" scope="row">{{ racer_table|length + 1 - loop.index }}</th>
+                    <th style="text-align: center; width: 20%;" scope="row">{{ row['date'].strftime('%B %d, %Y') }}</th>
+                    <td style="width: 30%;">{{ row['RaceName'] }}</td>
+                    <td style="width: 20%;">{{ row['RaceCategoryName'] }}</td>
+                    <td style="text-align: center; width: 10%;">{{ '{}/{}'.format(row['Place'], row['num_racers']) if row['Place'] else 'DNF' }}</td>
+                  </tr>
+                  {% endfor %}
+                  <!-- <tr>
+                    <th style="text-align: center; width: 10%;" scope="row">-</th>
+                    <th style="text-align: center; width: 20%;" scope="row">-</th>
+                    <td style="width: 30%;">Initial rating</td>
+                    <td style="width: 20%;"></td>
+                    <td style="text-align: center; width: 10%;"></td>
+                  </tr> -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <br>
+          <div class="col-lg-8 mx-auto text-center">
+            <div id='racer-plot'></div>
           </div>
         </div>
-        <br>
-        <div class="col-lg-8 mx-auto text-center">
-          <div id='racer-plot'></div>
+        <div class="col-lg-10 mx-auto">
+          <b>What does this plot mean?</b>
+          <ul>
+            <li>The connected black markers track the racer's average skill rating over time (hover to see race details).
+            <li>The dashed line represents the average skill rating, considering all racers. Hopefully the racer you selected is rated higher!</li>
+            <li>The shaded band represents a range of skill ratings that considers the uncertainty of the rating system.</li>
+            <li>The uncertaintly generally narrows as each racer achieves consistent results in a series of races.</li>
+            <li>Use the scroll wheel to zoom in; double click to reset.</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -365,7 +369,7 @@
   <section id="trueskill">
     <div class="container">
       <div class="row">
-        <div class="col-lg-8 mx-auto">
+        <div class="col-lg-10 mx-auto">
           <h2 style="text-align: center;">Learn about the rating system</h2>
           <ul>
             <li>
