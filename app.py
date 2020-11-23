@@ -83,8 +83,8 @@ def index_get():
     racer_table = model.get_racer_table(racer_id)
     racer_name = Racers.get_racer_name(racer_id)
 
-    # chart = None
-    chart = plotting.make_racer_plot(racer_table, avg=Racers.get_avg_rating())
+    racer_plot = plotting.make_racer_plot(racer_table,
+                                          avg=Racers.get_avg_rating())
 
     r = render_template('index.html',
                            race_form=race_form,
@@ -97,7 +97,7 @@ def index_get():
                            racer_table=racer_table,
                            racer_name=racer_name,
                            counts=COUNTS,
-                           chart=chart)
+                           racer_plot=racer_plot)
 
     return r
 
@@ -220,10 +220,8 @@ def preview_database(methods=['GET', 'POST']):
 
 @app.route('/evaluation')
 def accuracy():
-    evaluation.correlation()
-    evaluation.get_rating_hist()
-    # evaluation.accuracy()
-    # plotting.plot_hist()
+    plotting.make_hist()
+    plotting.make_corr_plot()
     return render_template('evaluation.html')
 
 @app.after_request

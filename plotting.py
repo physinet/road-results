@@ -1,8 +1,32 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import altair as alt
+import seaborn as sns
+
+sns.set()
 
 import evaluation
+
+def make_corr_plot():
+    """Makes a histogram of the Spearman correlation for each race."""
+    corr = evaluation.correlation()
+    fig, ax = plt.subplots()
+    ax.hist(corr, bins=30)
+    ax.set_xlim(-1, 1)
+    ax.set_xlabel('Spearman correlation')
+    ax.set_ylabel('Counts')
+    fig.savefig('static/plots/correlation.png')
+
+def make_hist():
+    """Makes a histogram of all mean skill rating values."""
+    mus = evaluation.get_mean_ratings()
+    fig, ax = plt.subplots()
+    ax.hist(mus, bins=30)
+    ax.set_xlim(0, 45)
+    ax.set_xlabel('Skill rating')
+    ax.set_ylabel('Counts')
+    fig.savefig('static/plots/ratings.png')
 
 def make_racer_plot(racer_table, avg=25):
     """Plot each racer's rating over time using altair. Avg = average rating
@@ -71,11 +95,3 @@ def make_racer_plot(racer_table, avg=25):
                  .interactive(bind_y=False)
 
     return chart.to_json()
-
-def plot_hist():
-    import matplotlib.pyplot as plt
-    hist, edges = evaluation.get_rating_hist()
-    print(hist)
-    fig, ax = plt.subplots()
-    ax.bar(edges[:-1], hist, width=np.diff(edges), edgecolor="black", align="edge")
-    fig.savefig('hist.png')

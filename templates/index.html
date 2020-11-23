@@ -126,7 +126,9 @@
           <br>
           <br>
           <b> How accurate are the ratings? </b><br>
-          To do...
+          We evaluate the validity of the ratings using the Spearman correlation, which evaluates the relationship between the assigned skill ratings and actual final placing for racers in each race.
+          Though it is impossible to predict races with certainty, the rating system consistently predicts the overall relationship between the relative skill between racers and their placing in a given race (average Spearman correlation around -0.5).
+          For more information, see <a class="js-scroll-trigger" href="#trueskill">below</a>.
           <br>
           <br>
           <b> Where do the results come from? </b><br>
@@ -155,7 +157,7 @@
             <li>Green Mountain Stage Race - Road Race (2019-09-01)</li>
             <li>Bristol Mountain Road Race (2019-06-02)</li>
           </ul>
-          Or, you can search for a race <a href="https://results.bikereg.com/?n=results&sn=all">here</a>.
+          Or, you can browse for a race <a href="https://results.bikereg.com/?n=results&sn=all">here</a>.
           <br>
           <br>
         </div>
@@ -201,10 +203,10 @@
                   <tr>
                     <th style="text-align: center; width: 15%" scope="col">Name</th>
                     <th style="text-align: center; width: 21%" scope="col">Team</th>
-                    <th style="text-align: center; width: 12%" scope="col">Prior Rating</th>
+                    <th style="text-align: center; width: 12%" scope="col">Prior Rating (μ ± σ)</th>
                     <th style="text-align: center; width: 10%" scope="col">Predicted Place</th>
                     <th style="text-align: center; width: 10%" scope="col">Actual Place</th>
-                    <th style="text-align: center; width: 12%" scope="col">Adjusted Rating</th>
+                    <th style="text-align: center; width: 12%" scope="col">New Rating (μ ± σ)</th>
                     <th style="text-align: center; width: 10%" scope="col">Rating Change</th>
                   </tr>
                 </thead>
@@ -260,10 +262,11 @@
           <ul>
             <li>The table shows the final results from the selected race, in order of final finishing place (DNF = "Did Not Finish").</li>
             <li>The skill ratings for each racer are represented as an average rating ± ("plus or minus") some uncertainty in that rating.</li>
-            <li>The ratings prior to the race ("Prior Rating") can be used to predict the outcome of the race—the racer with the highest average skill rating is most likely to win, and so on.</li>
+            <li>The Prior Ratings, ranked in order from highest to lowest, determine the Predicted Place for each racer.</li>
             <li>If a racer has not yet competed in the race, they are assigned an initial rating, represented in <i>(parenthesized italics)</i>.</li>
-            <li>The Adjusted Rating is the result of applying the <a class="js-scroll-trigger" href="#trueskill">rating system</a> to the results</li>
-            <li>The change in rating does not directly reflect the difference between predicted and actual place, but instead accounts for the performance of each racer relative to the historical performance of <i>all other</i> racers.</li>
+            <li>The New Rating is the result of applying the <a class="js-scroll-trigger" href="#trueskill">rating system</a> to the results.</li>
+            <li>The Rating Change is the <span style="color:green;">increase</span> or <span style="color:red;">decrease</span> for each average skill rating as a result of the race.</li>
+            <li>The New Ratings account for the performance of each racer relative to the historical performance of <i>all other</i> racers.</li>
           </ul>
           <br>
           <br>
@@ -282,7 +285,7 @@
             <li>Jeremy Powers</li>
             <li>Colby Lange</li>
           </ul>
-          Or, you can search for a racer <a href="https://results.bikereg.com/?n=racers&sn=find">here</a>.
+          Or, find a racer <a href="https://results.bikereg.com/?n=racers&sn=find">here</a>.
         </div>
         <br>
           <div class="container text-center">
@@ -371,63 +374,44 @@
       <div class="row">
         <div class="col-lg-10 mx-auto">
           <h2 style="text-align: center;">Learn about the rating system</h2>
+          <b>What is TrueSkill™ and how does it work?</b>
           <ul>
             <li>
-              BikeRank assigns a rating to each racer using the
-              <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">
-                TrueSkill™ Ranking System</a> developed by Microsoft for multiplayer online gaming.
-            </li>
-
-            The TrueSkill algorithm assumes that each racer's skill can be modeled by both an average skill rating and an uncertainty in that rating, accounting for both the system's uncertainty in
-            <li>
-              TrueSkill™ uses <a href="https://en.wikipedia.org/wiki/Bayesian_inference">Bayesian inference</a>
-              to update each racer's rating over time, comparing their skill level to that
-              of the other racers and evaluating the probability of the race outcome.
+              BikeRank assigns a rating to each racer using the TrueSkill™ Ranking System.
+              For detailed technical information, please see <a href="https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/">Microsoft's official page.</a>
             </li>
             <li>
-              Each racer's "performance" is expected to vary from race to race following a normal distribution.
+              The key principle behind TrueSkill™ is that each racer's performance is expected to vary between races, following a normal distribution.
               The mean μ of this distribution is the racer's "skill", and the standard deviation σ describes both the
               intrinsic variability and the uncertainty in the system's assessment of the racer's performance.
             </li>
-            <div class="plot">
+            <div style="text-align:center;">
               <img src="static/plots/normal.png">
             </div>
-            <!-- <li>
-              Consider a race between two equally-rated individuals. The winner's skill rating
-              increases, while the loser's rating decreases by the same amount.
-              The performance distribution for each racer narrows, because the system
-              now knows more about both racers.
-            </li>
-            <div class="plot">
-              <img src="static/plots/2racers.png">
-            </div>
             <li>
-              If the racers race again and the winner claims a second victory, the skill ratings
-              change in the same direction, but by a lesser amount. A skill gap has opened,
-              so the winner's victory can be anticipated.
+              Using <a href="https://en.wikipedia.org/wiki/Bayesian_inference">Bayesian inference</a>,
+              the system updates each racer's rating over time, evaluating the probability of the race outcome given the prior performance of all racers involved.
             </li>
-            <div class="plot">
-              <img src="static/plots/2racers2.png">
-            </div> -->
             <li>
-              A race between three racers.
+              Applying TrueSkill using a default μ = 25 and σ = 25/3, we obtain the following distribution of ratings for all racers:
             </li>
-            <div class="plot">
-              <img src="static/plots/3racers.png">
+            <div style="text-align:center;">
+              <img src="static/plots/ratings.png">
             </div>
-            <!-- <li>
-              Now consider a race between two individuals with different ratings.
-              If the racer with the higher rating wins, th
-              Consider a race between two equally-rated individuals. The winner's skill rating
-              increases, while the loser's rating decreases by the same amount.
-              The performance distribution for each racer narrows, because the system
-              now knows more about both racers.
-            </li>
-            <div class="plot">
-              <img src="static/plots/2diffracers.png">
+          </ul>
+          <b>Are the ratings valid?</b>
+          <ul>
+            <li>To evaluate the validity of the model, we consider the
+              <a href="https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient">Spearman correlation</a>
+              between the prior μ and final placing for a list of racers.</li>
+            <li>This metric essentially evaluates the relationship between the Predicted and Actual Place columns, and is reported along with the race table <a class="js-scroll-trigger" href="#race">above</a>.</li>
+            <li>The Spearman correlation has a value of -1 if the predicted placing is perfect, and a value of 1 if the predicted placing is completely wrong.</li>
+            <li>The plot below is a histogram of the Spearman correlation for all races consisting of at least 5 racers.</li>
+            <div style="text-align:center;">
+              <img src="static/plots/correlation.png">
             </div>
-          </ul> -->
-
+            <li>BikeRank makes reasonable predictions! The Spearman correlation is strongly negative for the vast majority of races (mean: -0.475, median: -0.510, standard deviation: 0.286).</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -468,7 +452,7 @@
 
   <!-- Altair racer plot -->
   <script>
-        var spec = {{ chart | safe }};
+        var spec = {{ racer_plot | safe }};
         vegaEmbed("#racer-plot", spec);
   </script>
 
