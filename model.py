@@ -185,7 +185,11 @@ class Races(Model, db.Model):
         """FlaskForm validator that checks that the race name is valid."""
         # HACK: filter was not being applied to the data for some reason...
         data = field.filters[0](field.data)
-        name, date = re.search(r'(.*) \((.*)\)', data).groups()
+        namedate = re.search(r'(.*) \((.*)\)', data)
+        if namedate:
+            name, date = namedate.groups()
+        else:
+            raise ValidationError('Regex failed!')
         if not (cls.query
                    .filter(cls.name == name,
                            cls.date == datetime.strptime(date, '%Y-%m-%d'))

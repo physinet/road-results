@@ -21,14 +21,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.devbridge-autocomplete/1.2.26/jquery.autocomplete.min.js"></script>
 
 <!-- For altair -->
-
  <script src="https://cdn.jsdelivr.net/npm/vega@5.17.0"></script>
  <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.17.0"></script>
  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.12.2"></script>
-
-  <script>
-    document.location.hash = '#' + '{{ scroll }}';
-  </script>
 
   <!-- Icon -->
   <link href="data:image/x-icon;base64,AAABAAEAEBAAAAAAAABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYZHesXGh//Fxof/xcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8WGR3rAAAAABYZHvUAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAwMEFAAAAAAXGh//AAAAAAAAAAAAAAAAAAAAABYZHvUXGh//AAAAAAAAAAAAAAAAAAAAAA8RFZcAAAAAAAAAABcaH/8XGh//Fxof/w8RFZIAAAAAAAAAAAAAAAAXGh//Fxof/wAAAAAAAAAAFxof/wAAAAASFBiwAAAAABcaH/8UFxvaAAAAABETF6QAAAAAFxof/wAAAAAAAAAAFxof/xUXHNkAAAAAAAAAAAAAAAAXGh/+Fxof/xcaH/8AAAAAAAAAABYZHukXGh//DhIVhAAAAAAAAAAAAAAAABUXHNkAAAAAERMXnhcaH/8XGh//Fxof/hcaH/8AAAAAAAAAAAAAAAAXGh//AAAAABYZHvwXGh//Fxof/xETFp4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXGR7yFxoe8RUYHfAVGB3uFRgd7g0OEnUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFxof/wAAAAAAAAAAAAAAABcaH/8XGh//AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABcaH/4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//8AAP//AAD//wAA//8AAIfhAAB73gAAew4AAGpWAABxjgAAg6EAAPg/AAD7nwAA+/8AAP//AAD//wAA//8AAA==" rel="icon" type="image/x-icon" />
@@ -173,7 +168,7 @@
               });
               </script>
             </form>
-            {{ race_form.errors.get('name_date')[0] if 'name_date' in race_form.errors }}
+            {{ errors[0] }}
           </div>
 
 
@@ -230,6 +225,8 @@
                       {% if row['Place'] is not none %}
                         {% if row['mu'] - row['prior_mu'] > 0 %}
                           <p style="color:green;">
+                        {% elif row['mu'] == row['prior_mu'] %}
+                          <p style="color:black;">
                         {% else %}
                           <p style="color:red;">
                         {% endif %}
@@ -272,10 +269,11 @@
               });
               </script>
             </form>
-            {{ racer_form.errors.get('racer_name')[0] if 'racer_name' in racer_form.errors }}
             <br>
+            {{ errors[1] }}
             DNF = "Did Not Finish"
         </div>
+
       </div>
 
       <div class="container">
