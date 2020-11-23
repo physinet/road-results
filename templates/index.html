@@ -122,7 +122,7 @@
           the outcomes of races occurring over time.
           The combination of the final placing and previous skill rating for each racer
           determines the amount by which each racer's rating changes.
-          Learn more about the ratings  <a class="js-scroll-trigger" href="#trueskill">below</a>.
+          Learn more about the ratings <a class="js-scroll-trigger" href="#trueskill">below</a>.
           <br>
           <br>
           <b> How accurate are the ratings? </b><br>
@@ -147,14 +147,22 @@
 
     <section id="race">
       <div class="container">
-        <div class="col-lg-10 mx-auto text-center">
-          <h2>Find a race</h2>
-          Looking for a suggestion? Try searching for ".........." (or find one <a href="https://results.bikereg.com/?n=results&sn=all">here</a>).
+        <div class="col-lg-8 mx-auto">
+          <h2 style="text-align:center;">Find a race</h2>
+          Find a race using the search box below. Unfamiliar with bike racing? Try these suggestions:
+          <ul>
+            <li>Hollenbeck's Spring Classic Road Race (2019-05-05)</li>
+            <li>Green Mountain Stage Race - Road Race (2019-09-01)</li>
+            <li>Bristol Mountain Road Race (2019-06-02)</li>
+          </ul>
+          Or, you can search for a race <a href="https://results.bikereg.com/?n=results&sn=all">here</a>.
           <br>
+          <br>
+        </div>
           <div class="container text-center">
-            <form method="POST">
+            <form method="POST" style="text-align:center;">
               {{ race_form.csrf_token }}
-              {{ race_form.name_date(size=80, placeholder=race_form.name_date.description) }}
+              {{ race_form.name_date(size=60, placeholder=race_form.name_date.description) }}
               {{ race_form.submit }}
               <script>
               $('#name_date').autocomplete({
@@ -168,15 +176,16 @@
               });
               </script>
             </form>
-            {{ errors[0] }}
           </div>
 
 
           <br>
+          <br>
+
           <h5 style="text-align: center">
-            {{ race_table[0]['RaceName'] }} • May 19, 2019 • {{ race_table[0]['RaceCategoryName'] }}
+            {{ race_name }} • {{ race_date.strftime('%B %d, %Y') }} • Category: {{ category_name }}
           </h5>
-            <form class="form-horizontal" method="POST">
+            <form class="form-horizontal" style="text-align:center;" method="POST">
                           <b>
                             Select another category:
                           </b>
@@ -184,19 +193,32 @@
                           {{ category_form.category }}
                           {{ category_form.submit }}
                         </form>
+
+          <div class="col-lg-8 mx-auto">
             <br>
-            DNF = "Did Not Finish"
+            <ul>
+              <li>The table shows the final results from the selected race, in order of final finishing place (DNF = "Did Not Finish").</li>
+              <li>The skill ratings for each racer are represented as an average rating ± ("plus or minus") some uncertainty in that rating.</li>
+              <li>The ratings prior to the race ("Prior Rating") can be used to predict the outcome of the race—the racer with the highest average skill rating is most likely to win, and so on.</li>
+              <li>If a racer has not yet competed in the race, they are assigned an initial rating, represented in <i>(parenthesized italics)</i>.</li>
+              <li>The Adjusted Rating is the result of applying the <a class="js-scroll-trigger" href="#trueskill">rating system</a> to the results</li>
+              <li>The change in rating does not directly reflect the difference between predicted and actual place, but instead accounts for the performance of each racer relative to the historical performance of <i>all other</i> racers.</li>
+            </ul>
             <br>
+            <br>
+          </div>
+
+          <div class="col-lg-10 mx-auto text-center">
             <div class="table" style="margin-bottom:300px;">
               <table class="table table-bordered table-sm table-hover table-scroll">
                 <thead class="thead-dark">
                   <tr>
                     <th style="text-align: center; width: 15%" scope="col">Name</th>
-                    <th style="text-align: center; width: 25%" scope="col">Team</th>
-                    <th style="text-align: center; width: 10%" scope="col">Prior Rating</th>
+                    <th style="text-align: center; width: 21%" scope="col">Team</th>
+                    <th style="text-align: center; width: 12%" scope="col">Prior Rating</th>
                     <th style="text-align: center; width: 10%" scope="col">Predicted Place</th>
                     <th style="text-align: center; width: 10%" scope="col">Actual Place</th>
-                    <th style="text-align: center; width: 10%" scope="col">Adjusted Rating</th>
+                    <th style="text-align: center; width: 12%" scope="col">Adjusted Rating</th>
                     <th style="text-align: center; width: 10%" scope="col">Rating Change</th>
                   </tr>
                 </thead>
@@ -204,19 +226,23 @@
                   {% for row in race_table %}
                   <tr>
                     <td style="text-align: center; width: 15%;">{{ row['Name'] }}</td>
-                    <td style="text-align: center; width: 25%;">{{ row['TeamName'] }}</td>
-                    <td style="text-align: center; width: 10%;">
+                    <td style="text-align: center; width: 21%;">{{ row['TeamName'] }}</td>
+                    <td style="text-align: center; width: 12%;">
                       {% if row['prior_mu'] is not none %}
-                        {{ '%.2f, %.2f' | format(row['prior_mu'], row['prior_sigma']) }}
+                        {% if row['prior_mu'] == 25 %}
+                          <i>{{ '(%.2f ± %.2f)' | format(row['prior_mu'], row['prior_sigma']) }}</i>
+                        {% else %}
+                          {{ '%.2f ± %.2f' | format(row['prior_mu'], row['prior_sigma']) }}
+                        {% endif %}
                       {% else %}
                         NONE
                       {% endif %}
                     </td>
                     <td style="text-align: center; width: 10%;">{{ row['predicted_place'] }}</td>
                     <td style="text-align: center; width: 10%;">{{ row['Place'] | default('DNF', True) }}</td>
-                    <td style="text-align: center; width: 10%;">
+                    <td style="text-align: center; width: 12%;">
                       {% if row['Place'] is not none %}
-                        {{ '%.2f, %.2f' | format(row['mu'], row['sigma']) }}
+                        {{ '%.2f ± %.2f' | format(row['mu'], row['sigma']) }}
                       {% else %}
                         -
                       {% endif %}
@@ -224,14 +250,14 @@
                     <td style="text-align: center; width: 10%;">
                       {% if row['Place'] is not none %}
                         {% if row['mu'] - row['prior_mu'] > 0 %}
-                          <p style="color:green;">
+                          <span style="color:green;">
                         {% elif row['mu'] == row['prior_mu'] %}
-                          <p style="color:black;">
+                          <span style="color:black;">
                         {% else %}
-                          <p style="color:red;">
+                          <span style="color:red;">
                         {% endif %}
-                        {{ '%.2f, %.2f' | format(row['mu'] - row['prior_mu'], row['sigma'] - row['prior_sigma']) }}
-                        </p>
+                        {{ '%.2f' | format(row['mu'] - row['prior_mu']) }}
+                        </span>
                       {% else %}
                         -
                       {% endif %}
@@ -248,10 +274,17 @@
   <section id="racer"   class="bg-light">
     <div class="container">
       <div class="row">
-        <div class="col-lg-10 mx-auto text-center">
+        <div class="col-lg-8 mx-auto">
           <h2>Find a racer</h2>
-          Enter the name of a racer (or find one <a href="https://results.bikereg.com/?n=racers&sn=find">here</a>).
-
+          Find a racer using the search box below. Don't know any cyclists? Shame on you. But feel free to try these suggestions:
+          <ul>
+            <li>Brian Schaefer (the author)</li>
+            <li>Jeremy Powers</li>
+            <li>Colby Lange</li>
+          </ul>
+          Or, you can search for a racer <a href="https://results.bikereg.com/?n=racers&sn=find">here</a>.
+        </div>
+        <br>
           <div class="container text-center">
             <form method="POST">
               {{ racer_form.csrf_token }}
@@ -269,9 +302,18 @@
               });
               </script>
             </form>
+          </div>
             <br>
-            {{ errors[1] }}
-            DNF = "Did Not Finish"
+            <div class="col-lg-8 mx-auto">
+              <br>
+              <ul>
+                <li>The following table shows a record of races finished by the selected racer (DNF = "Did Not Finish"), in reverse chronological order.</li>
+                <li>The chart below shows how the racer's average skill rating (connected black circles) and skill uncertainty (blue shading) has changed from race to race.</li>
+                <li>Hover over the markers to identify the corresponding race, and use the scroll wheel to zoom in.</li>
+              </ul>
+              <br>
+              <br>
+            </div>
         </div>
 
       </div>

@@ -53,16 +53,9 @@ def check_data_selection(race_id=None, category_index=None, racer_id=None):
                                                categories[category_index])
         errors.append('racer')
 
-    race_error = ''
-    racer_error = ''
-    if 'race' in errors:
-        race_error += 'Problem selecting race! Showing random race!'
-    if 'category' in errors:
-        race_error += '\n Problem selecting category! Showing first category!'
-    if 'racer' in errors:
-        racer_error += 'Problem selecting racer! Showing random racer!'
+    if errors:
+        return redirect(url_for('error'))
 
-    return race_id, category_index, racer_id, [race_error, racer_error]
 
 @app.route('/', methods=['GET'])
 def index_get():
@@ -70,8 +63,9 @@ def index_get():
     category_index = int(request.args.get('category', CATEGORY_INDEX))
     racer_id = int(request.args.get('racer', RACER_ID))
 
-    race_id, category_index, racer_id, errors = \
-        check_data_selection(race_id, category_index, racer_id)
+    error_redirect = check_data_selection(race_id, category_index, racer_id)
+    if error_redirect:
+        return error_redirect
 
     race_form = RaceForm(race_id)
     categories = Races.get_categories(race_id)
@@ -84,6 +78,8 @@ def index_get():
 
     category_name = categories[category_index]
     race_table = Results.get_race_table(race_id, category_name).all()
+    race_name = Races.get_race_name(race_id)
+    race_date = Races.get_race_date(race_id)
     racer_table = model.get_racer_table(racer_id)
     racer_name = Racers.get_racer_name(racer_id)
 
@@ -95,11 +91,13 @@ def index_get():
                            category_form=category_form,
                            racer_form=racer_form,
                            race_table=race_table,
+                           race_name=race_name,
+                           race_date=race_date,
+                           category_name=category_name,
                            racer_table=racer_table,
                            racer_name=racer_name,
                            counts=COUNTS,
-                           chart=chart,
-                           errors=errors)
+                           chart=chart)
 
     return r
 
@@ -145,6 +143,11 @@ def index_post():
         anchor = 'racer'
 
     return redirect(url_for('.index_get', _anchor=anchor, **params))
+
+
+@app.route('/error')
+def error():
+    return render_template('error.html')
 
 
 @app.route("/search/<string:box>")
