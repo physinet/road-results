@@ -1,6 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import SelectField, SubmitField, StringField, validators
-from wtforms.validators import AnyOf
+from wtforms import SelectField, SubmitField, StringField
 
 from model import Results, Races, Racers
 

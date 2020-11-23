@@ -1,7 +1,8 @@
 import os
 import time
+import json
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for, redirect
 from flask_wtf.csrf import CSRFProtect
 
 import commands
@@ -30,84 +31,123 @@ with app.app_context():
                     for table in ['Races', 'Results', 'Racers']}
 print('App initialized.')
 
-# global variables to keep track of which race/racer info to show
+# global default race/category/racer
 RACE_ID = 5291 # 10000 #11557
-CATEGORY_NAME = 'Men Collegiate Cat A'
+CATEGORY_INDEX = 1
 RACER_ID = 12150  # 9915  #177974
-SCROLL = ''
 
-def check_data_selection():
+def check_data_selection(race_id=None, category_index=None, racer_id=None):
     """Makes sure that we are trying to show data that is in the database."""
 
-    global RACE_ID, CATEGORY_NAME, RACER_ID
+    errors = []
+    if not race_id in Races.get_column('race_id'):
+        race_id = Races.get_random_id()
+        errors.append('race')
+    categories = Races.get_categories(race_id)
+    if category_index >= len(categories):
+        category_index = 0
+        errors.append('category')
+    if not racer_id in Racers.get_column('RacerID'):
+        # Random racer from the currently selected category
+        racer_id = Results.get_random_racer_id(racer_id,
+                                               categories[category_index])
+        errors.append('racer')
 
-    if not RACE_ID in Races.get_column('race_id'):
-        RACE_ID = Races.get_random_id()
-    categories = Races.get_categories(RACE_ID)
-    if not CATEGORY_NAME in categories:
-        CATEGORY_NAME = categories[0]
-    if not RACER_ID in Racers.get_column('RacerID'):
-        RACER_ID = Results.get_random_racer_id(RACE_ID, CATEGORY_NAME)
+    if errors:
+        return redirect(url_for('error'))
 
 
+@app.route('/', methods=['GET'])
+def index_get():
+    race_id = int(request.args.get('race', RACE_ID))
+    category_index = int(request.args.get('category', CATEGORY_INDEX))
+    racer_id = int(request.args.get('racer', RACER_ID))
 
-@app.route('/', methods=['GET', 'POST'])
-def index_post():
-    global RACE_ID, CATEGORY_NAME, RACER_ID, SCROLL, COUNTS
+    error_redirect = check_data_selection(race_id, category_index, racer_id)
+    if error_redirect:
+        return error_redirect
 
-    check_data_selection()
-    # Get whichever fields were submitted - 2 out of 3 of these should be None
-    name_date = request.form.get('name_date')
-    category = request.form.get('category')
-    racer_name = request.form.get('racer_name')
-
-    # Race form - update RACE_ID if valid name_date submitted
-    race_form = RaceForm(RACE_ID)
-    if race_form.validate_on_submit() and name_date:
-        RACE_ID = Races.get_race_id(name_date)
-
-    # Category form - update CATEGORY_NAME with first category or selected cat
-    categories = Races.get_categories(RACE_ID)
+    race_form = RaceForm(race_id)
+    categories = Races.get_categories(race_id)
     category_form = CategoryForm(categories)
-    if category_form.validate_on_submit():
-        CATEGORY_NAME = category
-    elif CATEGORY_NAME.lower() not in [c.lower() for c in categories]:
-        CATEGORY_NAME = categories[0]
-
-    # Racer form - update RACER_ID if valid racer name submitted
-    racer_form = RacerForm(RACER_ID)
-    if racer_form.validate_on_submit() and racer_name:
-        RACER_ID = Racers.get_racer_id(racer_name)
-
-    # Scroll to appropriate part of website depending on what field submitted
-    if name_date or category:
-        SCROLL = 'race'
-    elif racer_name:
-        SCROLL = 'racer'
+    racer_form = RacerForm(racer_id)
 
     # Reset data in form fields to show placeholder text again
-    race_form.reset_placeholder(RACE_ID)
-    racer_form.reset_placeholder(RACER_ID)
+    race_form.reset_placeholder(race_id)
+    racer_form.reset_placeholder(racer_id)
 
-    race_table = Results.get_race_table(RACE_ID, CATEGORY_NAME).all()
-    racer_table = model.get_racer_table(RACER_ID)
-    racer_name = Racers.get_racer_name(RACER_ID)
+    category_name = categories[category_index]
+    race_table = Results.get_race_table(race_id, category_name).all()
+    race_name = Races.get_race_name(race_id)
+    race_date = Races.get_race_date(race_id)
+    racer_table = model.get_racer_table(racer_id)
+    racer_name = Racers.get_racer_name(racer_id)
 
-    # chart = None
-    chart = plotting.make_racer_plot(racer_table)
+    racer_plot = plotting.make_racer_plot(racer_table,
+                                          avg=Racers.get_avg_rating())
 
     r = render_template('index.html',
                            race_form=race_form,
                            category_form=category_form,
                            racer_form=racer_form,
-                           scroll=SCROLL,
                            race_table=race_table,
+                           race_name=race_name,
+                           race_date=race_date,
+                           category_name=category_name,
                            racer_table=racer_table,
                            racer_name=racer_name,
                            counts=COUNTS,
-                           chart=chart)
+                           racer_plot=racer_plot)
 
     return r
+
+@app.route('/', methods=['POST'])
+def index_post():
+    """Translate POST into a GET request"""
+    from urllib.parse import parse_qs
+
+    # extract anchor if all else fails
+    for anchor in ['race', 'racer']:
+        if f'#{anchor}' in request.referrer:
+            break
+        else:
+            anchor = ''
+
+    # extract and parse parameters from last GET request, if any
+    if '?' in request.referrer:
+        params = {k: int(v[0]) for k, v in
+                  parse_qs(request.referrer.split('?', 1)[1]).items()}
+    else:
+        params = {}
+    print(params)
+
+    name_date = request.form.get('name_date')
+    category = request.form.get('category')
+    racer_name = request.form.get('racer_name')
+
+    race_form = RaceForm(params.get('race', RACE_ID))
+    if race_form.validate_on_submit() and name_date:
+        params['race'] = Races.get_race_id(name_date)
+        params['category'] = 0  # reset category if viewing different race
+        anchor = 'race'
+
+    categories = Races.get_categories(params.get('race', RACE_ID))
+    category_form = CategoryForm(categories)
+    if category_form.validate_on_submit():
+        params['category'] = categories.index(category)
+        anchor = 'race'
+
+    racer_form = RacerForm(params.get('racer', RACER_ID))
+    if racer_form.validate_on_submit() and racer_name:
+        params['racer'] = Racers.get_racer_id(racer_name)
+        anchor = 'racer'
+
+    return redirect(url_for('.index_get', _anchor=anchor, **params))
+
+
+@app.route('/error')
+def error():
+    return render_template('error.html')
 
 
 @app.route("/search/<string:box>")
@@ -180,8 +220,8 @@ def preview_database(methods=['GET', 'POST']):
 
 @app.route('/evaluation')
 def accuracy():
-    # evaluation.accuracy()
-    plotting.plot_hist()
+    plotting.make_hist()
+    plotting.make_corr_plot()
     return render_template('evaluation.html')
 
 @app.after_request

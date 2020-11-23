@@ -1,19 +1,34 @@
 import numpy as np
 
+from sqlalchemy import func
+
+from scipy.stats import spearmanr
+
 from model import Racers, Races, Results
 
-def accuracy():
-    # We only want to compute accuracy for results that have already been rated
-    # We also need to exclude DNF racers - there is not much to learn from them
-    # Should we also filter to races with at least N racers?
-    # e.g. a race with 5 people is much more likely to have high accuracy
-    # than a race with 50
-    rated = Results.query.filter(Results.rated, Results.Place != None).yield_per(1000)
-    for result in rated:
-        print(result.Place, result.predicted_place)
+def correlation(min_racers=5):
+    """Calculates the Spearman correlation for races with the given minimum
+    number of racers."""
 
-def get_rating_hist():
-    """Get a histogram of all mean ratings."""
-    racers = Racers.query.filter(Racers.mu!=25).all()
-    hist, bin_edges = np.histogram([racer.mu for racer in racers], bins=50)
-    return hist, bin_edges
+    results = Results.query \
+                     .filter(Results.Place != None) \
+                     .with_entities(Results.RaceName,
+                                    Results.RaceCategoryName,
+                                    func.array_agg(Results.Place),
+                                    func.array_agg(Results.prior_mu)) \
+                     .group_by(Results.RaceName, Results.RaceCategoryName)
+
+    print('Calculating Spearman correlation...')
+    correlations = []
+    for name, category, places, mus in results:
+        if len(places) >= min_racers:
+            correlations.append(spearmanr(places, mus).correlation)
+    print('Done calculating Spearman correlation!')
+
+    return correlations
+
+
+def get_mean_ratings():
+    """Get all mean ratings."""
+    racers = Racers.query.filter(Racers.mu != 25).all()
+    return [racer.mu for racer in racers]

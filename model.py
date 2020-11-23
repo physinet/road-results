@@ -137,7 +137,14 @@ class Races(Model, db.Model):
         return cls.query \
                   .filter(cls.race_id == race_id) \
                   .with_entities(cls.categories) \
-                  .one()[0]  # one row, one entity
+                  .first()[0]  # one row, one entity
+
+    @classmethod
+    def get_race_date(cls, race_id):
+        """Get the date of the race with given race_id"""
+        date, = cls.query.filter(cls.race_id == race_id) \
+                        .with_entities(cls.date).first()
+        return date
 
     @classmethod
     def get_race_id(cls, name_date):
@@ -149,14 +156,23 @@ class Races(Model, db.Model):
                    .filter(cls.name == name,
                            cls.date == datetime.strptime(date, '%Y-%m-%d'))
                    .with_entities(cls.race_id)
-                   .one()[0])
+                   .first()[0])
+
+    @classmethod
+    def get_race_name(cls, race_id):
+        """Get the name of the race with given race_id"""
+        name, = cls.query.filter(cls.race_id == race_id) \
+                        .with_entities(cls.name).first()
+        return name
 
     @classmethod
     def get_race_name_date(cls, race_id):
         """Get the name and date of the race with given race_id"""
-        name, date = cls.query.filter(cls.race_id == race_id) \
-                        .with_entities(cls.name, cls.date).one()
-        return '{} ({})'.format(name, date.strftime('%Y-%m-%d'))
+        return '{} ({})'.format(cls.get_race_name(race_id),
+                                cls.get_race_date(race_id).strftime('%Y-%m-%d'))
+
+
+
 
     @classmethod
     def get_random_id(cls):
@@ -185,7 +201,11 @@ class Races(Model, db.Model):
         """FlaskForm validator that checks that the race name is valid."""
         # HACK: filter was not being applied to the data for some reason...
         data = field.filters[0](field.data)
-        name, date = re.search(r'(.*) \((.*)\)', data).groups()
+        namedate = re.search(r'(.*) \((.*)\)', data)
+        if namedate:
+            name, date = namedate.groups()
+        else:
+            raise ValidationError('Regex failed!')
         if not (cls.query
                    .filter(cls.name == name,
                            cls.date == datetime.strptime(date, '%Y-%m-%d'))
@@ -222,19 +242,28 @@ class Racers(Model, db.Model):
         cls.add(rows)
 
     @classmethod
+    def get_avg_rating(cls):
+        """Get the average skill rating for racers that have been rated at
+        least once (i.e. they don't have the default rating of exactly 25).
+        """
+        racers = cls.query.filter(cls.mu != 25).all()
+        mus = [racer.mu for racer in racers]
+        return sum(mus) / len(mus)
+
+    @classmethod
     def get_racer_id(cls, name):
         """Get the racer id for the given racer name. Returns None for
         invalid racer name.
         """
         return (cls.query.filter(cls.Name == name)
                          .with_entities(cls.RacerID)
-                         .one()[0])
+                         .first()[0])
 
     @classmethod
     def get_racer_name(cls, RacerID):
         """Get the name of the racer with given RacerID"""
         return cls.query.filter(cls.RacerID == RacerID) \
-                  .with_entities(cls.Name).one()[0]
+                  .with_entities(cls.Name).first()[0]
 
 
     @classmethod

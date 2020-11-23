@@ -1,13 +1,10 @@
 # BikeRank: skill ratings for amateur road cyclists
 
-This is a **working draft** of an application created by [Brian Schaefer](https://www.linkedin.com/in/briantschaefer/) for [The Data Incubator](https://www.thedataincubator.com/) (Fall 2020 cohort).
-This project will be finalized by **December 1, 2020**. Until then, please excuse any shortcomings.
+This application was created by [Brian Schaefer](https://www.linkedin.com/in/briantschaefer/) for [The Data Incubator](https://www.thedataincubator.com/) (Fall 2020 cohort).
 
-BikeRank adopts the [TrueSkill™ Ranking System](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/) to [amateur road cycling races](https://results.bikereg.com/).
-This project is available at http://bike-rank.herokuapp.com/.
-The page may take around 30 seconds to load initially, so please be patient!
-Here, you can view the ratings for all racers in a single race, or view how the rating of a single racer changed over time.
-Searching for a race or racer by name takes about 10 seconds upon submitting, so once again please be patient!
+BikeRank applies the [TrueSkill™ Ranking System](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/) to [amateur road cycling races](https://results.bikereg.com/).
+The interactive website at http://bike-rank.herokuapp.com/ allows users to explore the skill rankings for >100,000 cyclists. Users can either view how the ratings are updated for each racer in a specific race, or how the rating for a single racer changes over time.
+The website may take 30 seconds to load (both initially and after fetching race/racer results). Please be patient and excuse the delay!
 
 # Architecture
 This project combines an assortment of techniques new to the author, each explained briefly below.
@@ -61,4 +58,4 @@ SECRET_KEY=<secret_key_here>
 1. Run the Flask app with `flask run`.
 1. Navigate to `localhost:5000/database`. At this point, the `Results` table is empty, so you should only see the column names.
 1. Navigate to `localhost:5000/database?add=True&subset=1,1000` to add data to (in order) the `Races`, `Results`, and `Racers` tables. As explained above, the `subset` parameter (optional) can be used to limit the number of races considered and should be omitted to add the entire dataset.
-1. Finally, navigate to `localhost:5000`. If the default race and racer are not in the database yet, the home page will display a random race and a random racer that participated in that race.
+1. Finally, navigate to `localhost:5000` to view the user-facing interface and explore the results!
