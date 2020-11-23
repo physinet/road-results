@@ -4,7 +4,7 @@ This application was created by [Brian Schaefer](https://www.linkedin.com/in/bri
 
 BikeRank applies the [TrueSkill™ Ranking System](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/) to [amateur road cycling races](https://results.bikereg.com/).
 The interactive website at http://bike-rank.herokuapp.com/ allows users to explore the skill rankings for >100,000 cyclists. Users can either view how the ratings are updated for each racer in a specific race, or how the rating for a single racer changes over time.
-The website may take 30 seconds to load initially, and about 10 seconds to fetch results for a specified race or racer. Please be patient and excuse the delay!
+The website may take 30 seconds to load (both initially and after fetching race/racer results). Please be patient and excuse the delay!
 
 # Architecture
 This project combines an assortment of techniques new to the author, each explained briefly below.
