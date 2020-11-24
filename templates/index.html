@@ -405,11 +405,14 @@
               <a href="https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient">Spearman correlation</a>
               between the prior μ and final placing for a list of racers.</li>
             <li>This metric essentially evaluates the relationship between the Predicted and Actual Place columns, and is reported along with the race table <a class="js-scroll-trigger" href="#race">above</a>.</li>
-            <li>The Spearman correlation has a value of -1 if the predicted placing is perfect, and a value of 1 if the predicted placing is completely wrong.</li>
+            <li>The Spearman correlation ranges from -1 to 1, where -1 indicates that we predicted the race results perfectly.</li>
+            <li>We expect a Spearman correlation that is strongly negative, but not exactly -1.
+                There is quite a bit of randomness built into bike racing that prevents perfect predictions: crashes, weather conditions, choice of race strategy, and even perhaps what everybody ate for breakfast.</li>
             <li>The plot below is a histogram of the Spearman correlation for all races consisting of at least 5 racers.</li>
             <div style="text-align:center;">
               <img src="static/plots/correlation.png">
             </div>
+            <br>
             <li>BikeRank makes reasonable predictions! The Spearman correlation is negative for 96% of races with at least 5 racers (mean: -0.475, median: -0.510, standard deviation: 0.286).</li>
           </ul>
         </div>
