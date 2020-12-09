@@ -37,7 +37,7 @@ def make_racer_plot(racer_table, avg=25):
     df['date'] = df['date'].dt.strftime('%B %d, %Y')  #.strftime('%m/%d/%y')
 
     dnf = df['Place'].isna()
-    df.loc[~dnf, 'place_string'] = \
+    df.loc[~dnf, 'Place'] = \
         df.loc[~dnf, 'Place'].astype(int).astype(str) \
         + ' / ' + df.loc[~dnf, 'num_racers'].astype(str)
     df.loc[dnf, 'place_string'] = 'DNF'
@@ -68,7 +68,7 @@ def make_racer_plot(racer_table, avg=25):
                 scale=scalex,
                 axis=alt.Axis(tickMinStep=1, grid=False)),
         y=alt.Y('mu', title='Rating', scale=scaley, axis=alt.Axis(grid=False)),
-        tooltip=['Race Name', 'Date', 'place_string']
+        tooltip=['Race Name', 'Date', 'Place']
     )
 
     mu = mu.mark_line(color='black') + mu.mark_point(color='black')
