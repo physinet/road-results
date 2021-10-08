@@ -3,8 +3,9 @@
 This application was created by [Brian Schaefer](https://www.linkedin.com/in/briantschaefer/) for [The Data Incubator](https://www.thedataincubator.com/) (Fall 2020 cohort).
 
 BikeRank applies the [TrueSkill™ Ranking System](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/) to [amateur road cycling races](https://results.bikereg.com/).
-The interactive website at http://bike-rank.herokuapp.com/ allows users to explore the skill rankings for >100,000 cyclists. Users can either view how the ratings are updated for each racer in a specific race, or how the rating for a single racer changes over time.
-The website may take 30 seconds to load (both initially and after fetching race/racer results). Please be patient and excuse the delay!
+~~The interactive website at http://bike-rank.herokuapp.com/ allows users to explore the skill rankings for >100,000 cyclists. Users can either view how the ratings are updated for each racer in a specific race, or how the rating for a single racer changes over time.
+The website may take 30 seconds to load (both initially and after fetching race/racer results). Please be patient and excuse the delay!~~
+As of October 2021, I have reached the end of my AWS RDS Free Tier Period and am no longer maintaining the Heroku app. I would encourage those interested in exploring this project to clone the repo and run the code locally (see below).
 
 # Architecture
 This project combines an assortment of techniques new to the author, each explained briefly below.
